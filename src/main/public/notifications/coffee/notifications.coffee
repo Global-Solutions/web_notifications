@@ -1,0 +1,2 @@
+log = -> console.log 'test'
+
