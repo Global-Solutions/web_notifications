@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fileset-config file-format-version="1.2.0" simple-config="true" sync-formatter="false">
+  <fileset check-config-name="Sun Checks" enabled="true" local="false" name="all">
+    <file-match-pattern include-pattern="true" match-pattern="."/>
+  </fileset>
+  <filter enabled="true" name="FilesFromPackage">
+    <filter-data value="src/main/generated"/>
+    <filter-data value="src/test/java"/>
+    <filter-data value="src/test/generated"/>
+  </filter>
+</fileset-config>

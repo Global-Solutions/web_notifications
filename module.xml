@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module conf:schemaLocation="urn:intramart:jackling:toolkit:configurations configurations.xsd" xmlns="urn:intramart:jackling:module" xmlns:conf="urn:intramart:jackling:toolkit:configurations" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemeLocation="urn:intramart:jackling:module module.xsd">
+  <id>jp.co.gsol.oss.notifications.web_notifications</id>
+  <version>1.0.0</version>
+  <type>module</type>
+  <name>${module.name}</name>
+  <vendor>${module.vendor}</vendor>
+  <description>${module.description}</description>
+  <dependencies>
+    <dependency>
+      <module-id>jp.co.gsol.wiki.wiki_imbox_plugin</module-id>
+      <verified-version>1.0.0</verified-version>
+    </dependency>
+  </dependencies>
+</module>
