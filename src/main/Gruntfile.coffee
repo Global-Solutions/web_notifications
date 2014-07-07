@@ -1,4 +1,8 @@
 module.exports = (grunt) ->
+    mapName = (fileName) ->
+        console.log fileName
+        fileName + '.map'
+
     grunt.initConfig
         pkg: grunt.file.readJSON 'package.json'
         watch:
@@ -20,13 +24,15 @@ module.exports = (grunt) ->
                 files: [
                     expand: true,
                     cwd: 'public/notifications/js'
-                    src: ['*.js']
+                    src: ['*.js', '!*.min.js']
                     dest: 'public/notifications/js'
                     ext: '.min.js'
                 ]
                 options:
-                    sourceMap: (fileName) ->
-                        fileName.replace /\.js$/, '.js.map'
+                    sourceMapIncludeSources: true
+                    sourceMapIn: mapName
+                    sourceMap: true
+
 
     grunt.loadNpmTasks 'grunt-contrib-coffee'
     grunt.loadNpmTasks 'grunt-contrib-watch'
