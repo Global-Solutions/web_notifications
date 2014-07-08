@@ -49,7 +49,7 @@
       };
     })(this);
     this.showNotification = function(title, _arg) {
-      var $deferred, closeOnClick, events, k, n, options, timeout, v, _ref;
+      var $deferred, $n, closeOnClick, events, k, n, options, startTimer, timeout, v, _ref;
       _ref = _arg != null ? _arg : {}, options = _ref.options, events = _ref.events, timeout = _ref.timeout, closeOnClick = _ref.closeOnClick;
       $deferred = $.Deferred();
       if (options != null) {
@@ -60,29 +60,31 @@
       n = new Notification(title, options || {
         icon: icon
       });
-      $(n).on({
+      startTimer = function() {
+        if (timeout != null) {
+          return setTimeout((function() {
+            return n.close();
+          }), timeout);
+        }
+      };
+      $n = $(n).on({
         'show': function() {
-          return $deferred.resolve(this);
+          $deferred.resolve(this, startTimer());
         },
         'error': function() {
-          return $deferred.reject(this);
+          $deferred.reject(this, startTimer());
         }
       });
       if (events) {
         for (k in events) {
           v = events[k];
-          $(n).on(k, v);
+          $n.on(k, v);
         }
       }
       if (closeOnClick) {
-        $(n).on('click', (function() {
-          return n.close();
+        $n.on('click', (function() {
+          n.close();
         }));
-      }
-      if (timeout != null) {
-        setTimeout((function() {
-          return n.close();
-        }), timeout);
       }
       n.events = events;
       n.timeout = timeout;

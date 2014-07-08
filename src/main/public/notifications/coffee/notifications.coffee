@@ -39,15 +39,23 @@ $ = @jQuery
         $deferred = $.Deferred()
 
         options?.icon ?= icon
-        n = new Notification title, options || icon: icon
+        n = new Notification title, options or icon: icon
 
-        $(n).on
-            'show': -> $deferred.resolve @
-            'error': -> $deferred.reject @
-        $(n).on k, v for k, v of events if events
-        $(n).on 'click', (-> n.close()) if closeOnClick
+        startTimer = ->
+            setTimeout (-> n.close()), timeout if timeout?
 
-        setTimeout (-> n.close()), timeout if timeout?
+        $n = $(n).on
+            'show': ->
+                $deferred.resolve @, startTimer()
+                return
+            'error': ->
+                $deferred.reject @, startTimer()
+                return
+        $n.on k, v for k, v of events if events
+        $n.on 'click', (->
+            n.close()
+            return
+        ) if closeOnClick
 
         n.events = events
         n.timeout = timeout
