@@ -4,7 +4,7 @@ import java.io.InputStream;
 
 import com.caucho.websocket.WebSocketContext;
 
-public interface WebSocketExecutor {
+public interface WebSocketTaker {
 
     void register(WebSocketContext context);
 

@@ -1,3 +1,4 @@
 *~
 *.swp
 node_modules
+/schema-gen.output

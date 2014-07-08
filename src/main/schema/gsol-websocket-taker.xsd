@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://global-solutions.co.jp/notifications/config/gsol-websocket-taker"
+    elementFormDefault="qualified"
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    xmlns:tns="http://global-solutions.co.jp/notifications/config/gsol-websocket-taker"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+    jaxb:version="2.0">
+    <annotation>
+        <appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="jp.co.gsol.oss.notifications.config.websocketTaker"/>
+            </jaxb:schemaBindings>
+        </appinfo>
+    </annotation>
+
+    <element name="gsol-websocket-taker">
+        <complexType>
+            <all>
+                <element name="protocol" type="string" minOccurs="1" maxOccurs="1"/>
+                <element name="taker" type="tns:taker" minOccurs="1" maxOccurs="1"/>
+            </all>
+        </complexType>
+    </element>
+    <complexType name="taker">
+        <all>
+            <element name="component-name" type="string" minOccurs="1" maxOccurs="1"/>
+            <element name="dicon-path" type="string" minOccurs="1" maxOccurs="1"/>
+        </all>
+    </complexType>
+</schema>

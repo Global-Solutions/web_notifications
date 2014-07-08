@@ -3,7 +3,6 @@ package jp.co.gsol.oss.notifications;
 import java.io.IOException;
 
 import javax.servlet.GenericServlet;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -27,23 +26,24 @@ public class ResinWebSocketServlet extends GenericServlet {
     /** . */
     private static final long serialVersionUID = 3369924150095133613L;
 
-    final Logger logger = Logger.getLogger();
     @Override
     public void service(final ServletRequest request, final ServletResponse response)
-            throws IOException, ServletException {
+    throws IOException {
         final HttpServletRequest req = (HttpServletRequest) request;
         final HttpServletResponse res = (HttpServletResponse) response;
 
         final String protocol = req.getHeader("Sec-WebSocket-Protocol");
-        Optional<WebSocketExecutor> executor = WebSocketManager.getProtocolsExecutor(protocol);
-        if (executor.isPresent()) {
-            final WebSocketListener listener = new ResinWebSocketListener(executor.get(),
+        Logger.getLogger().debug("{}", WebSocketTakerManager.registerdProtocols());
+        Optional<WebSocketTaker> taker = WebSocketTakerManager.getProtocolsTaker(protocol);
+        if (taker.isPresent()) {
+            final WebSocketListener listener = new ResinWebSocketListener(taker.get(),
                     Contexts.get(AccountContext.class));
             res.setHeader("Sec-WebSocket-Protocol", protocol);
             final WebSocketServletRequest wsRequest = (WebSocketServletRequest)
                     ((TransitionLogHttpServletRequestWrapper) request).getRequest();
             wsRequest.startWebSocket(listener);
         } else {
+            Logger.getLogger().debug("invalid protocol: {}", protocol);
             res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
         }
     }

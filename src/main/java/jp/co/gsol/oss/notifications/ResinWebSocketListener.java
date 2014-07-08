@@ -19,18 +19,18 @@ import com.caucho.websocket.WebSocketContext;
 public class ResinWebSocketListener extends AbstractWebSocketListener {
     final Logger logger = Logger.getLogger();
 
-    final WebSocketExecutor executor;
-    public ResinWebSocketListener(final WebSocketExecutor webSocketExecutor,
+    final WebSocketTaker taker;
+    public ResinWebSocketListener(final WebSocketTaker webSocketTaker,
             final AccountContext accountContext) {
         // TODO 自動生成されたコンストラクター・スタブ
-        executor = webSocketExecutor;
+        taker = webSocketTaker;
     }
 
     @Override
     public final void onStart(final WebSocketContext context)
       throws IOException {
         // called when the connection starts
-        executor.register(context);
+        taker.register(context);
         final PrintWriter w = context.startTextMessage();
         w.println("connect");
         w.close();
@@ -47,7 +47,7 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
                 sb.append(line);
             }
             final String message = sb.toString();
-            executor.onReadText(context, message);
+            taker.onReadText(context, message);
             logger.debug("readText: {}", context.toString());
             final PrintWriter out = context.startTextMessage();
             out.println(message);
@@ -60,25 +60,25 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
 
     @Override
     public void onReadBinary(final WebSocketContext context, final InputStream is) {
-        executor.onReadBinary(context, is);
+        taker.onReadBinary(context, is);
         logger.debug("readBinary: {}", context.toString());
     }
     @Override
     public final void onClose(final WebSocketContext context) throws IOException {
     // called when the client closes gracefully
-        executor.onClose(context);
+        taker.onClose(context);
         logger.debug("close: {}", context.toString());
     }
     @Override
     public void onTimeout(final WebSocketContext context) {
-        executor.onTimeout(context);
+        taker.onTimeout(context);
         logger.debug("timeout: {}", context.toString());
     }
     @Override
     public final void onDisconnect(final WebSocketContext context) throws IOException {
     // called when the client closes disconnects
-        executor.onDisconnect(context);
-        executor.unregister(context);
+        taker.onDisconnect(context);
+        taker.unregister(context);
         logger.debug("disconnect: {}", context.toString());
     }
 }
