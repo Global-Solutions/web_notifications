@@ -1,5 +1,6 @@
 package jp.co.gsol.oss.notifications;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import com.caucho.websocket.WebSocketContext;
@@ -16,7 +17,7 @@ public interface WebSocketTaker {
 
     void onReadBinary(WebSocketContext context, InputStream is);
 
-    void onReadText(WebSocketContext context, String message);
+    void onReadText(WebSocketContext context, String message) throws IOException;
 
     void unregister(WebSocketContext context);
 }

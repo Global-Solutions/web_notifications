@@ -49,9 +49,6 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
             final String message = sb.toString();
             taker.onReadText(context, message);
             logger.debug("readText: {}", context.toString());
-            final PrintWriter out = context.startTextMessage();
-            out.println(message);
-            out.close();
         } catch (IOException e) {
             // TODO 自動生成された catch ブロック
             e.printStackTrace();
