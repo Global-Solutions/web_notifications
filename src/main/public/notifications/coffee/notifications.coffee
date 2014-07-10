@@ -99,17 +99,27 @@ $ = @jQuery
     @defaultServer = (server = defaultServer) ->
         defaultServer = server
 
-    @connect = ({server, protocol, messageHandler, events, reconnect}) ->
+    @connect = ({server, protocol, messageHandler, events, reconnect, keepalive}) ->
         $deferred = $.Deferred()
         server ?= defaultServer
         ws = new WebSocket server, protocol
 
+        timeoutId = {}
+        clearConnectionKeeper = ->
+            if reconnect
+                clearTimeout timeoutId.reconnect if timeoutId.reconnect?
+                $(ws).off 'close.reconnect'
+                reconnect = false
+            if keepalive
+                clearTimeout timeoutId.keepalive if timeoutId.keepalive?
+                keepalive = false
+
         op =
-            'send': (message) -> ws.send(message)
+            'send': (message) ->
+                ws.send message
+                return
             'close': ->
-                if reconnect
-                    $(ws).off 'close.reconnect'
-                    reconnect = false
+                clearConnectionKeeper()
                 ws.close()
                 return
 
@@ -118,9 +128,7 @@ $ = @jQuery
                 $deferred.resolve op, e
                 return
             'error.promise': (e) ->
-                if reconnect
-                    $(ws).off 'close.reconnect'
-                    reconnect = false
+                clearConnectionKeeper()
                 $deferred.reject e
                 return
         (attachMessageEvent = ($s) ->
@@ -130,10 +138,12 @@ $ = @jQuery
             ) if messageHandler
             return
         ) $ws
-        retryCount = 0
+        callOrVal = (fnOrVal, toVal, count, defaultValue) -> +(fnOrVal?(count) ? toVal(fnOrVal ? defaultValue, count))
         (reconnector = ($s) ->
+            retryCount = 0
             $s.on 'close.reconnect', (->
-                setTimeout (->
+                timeout = callOrVal(reconnect.interval, ((v) -> v), retryCount, 0) + callOrVal(reconnect.deceleration, ((v, c) -> v * c), retryCount, 1000) + Math.random() * 5000
+                timeoutId.reconnect = setTimeout ->
                     ws = new WebSocket server, protocol
                     $rews = $(ws).on 'open.reconnect', (e) ->
                         retryCount = 0
@@ -142,7 +152,7 @@ $ = @jQuery
                     reconnector $rews
                     attachEvents $rews, reconnect.events
                     return
-                ), (reconnect.interval ?= 0) + (reconnect.deceleration ?= 1000) * retryCount
+                , timeout
                 ++retryCount
                 return
             ) if reconnect
@@ -150,8 +160,21 @@ $ = @jQuery
         ) $ws
         (attachEvents = ($s, es) ->
             $s.on k, v for k, v of es if es
+            return
         ) $ws, events
-
+        (->
+            count = 0
+            (pingSender = ->
+                timeoutId.keepalive = setTimeout ->
+                    ws.send keepalive.message?(count) ? (keepalive.message ? '')
+                    ++count
+                    pingSender()
+                    return
+                , (callOrVal keepalive.interval, ((v) -> v), count, 60000) if keepalive
+                return
+            )()
+            return
+        )()
         $deferred.promise()
 
     @

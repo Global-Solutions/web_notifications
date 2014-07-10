@@ -31,9 +31,6 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
       throws IOException {
         // called when the connection starts
         taker.register(context);
-        final PrintWriter w = context.startTextMessage();
-        w.println("connect");
-        w.close();
         logger.debug("start: {} timeout: {}", context.toString(), context.getTimeout());
     }
 

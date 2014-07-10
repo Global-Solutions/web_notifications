@@ -33,7 +33,6 @@ public class ResinWebSocketServlet extends GenericServlet {
         final HttpServletResponse res = (HttpServletResponse) response;
 
         final String protocol = req.getHeader("Sec-WebSocket-Protocol");
-        Logger.getLogger().debug("{}", WebSocketTakerManager.registerdProtocols());
         Optional<WebSocketTaker> taker = WebSocketTakerManager.getProtocolsTaker(protocol);
         if (taker.isPresent()) {
             final WebSocketListener listener = new ResinWebSocketListener(taker.get(),

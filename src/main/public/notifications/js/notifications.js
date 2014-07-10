@@ -162,22 +162,35 @@
       return defaultServer = server;
     };
     this.connect = function(_arg) {
-      var $deferred, $ws, attachEvents, attachMessageEvent, events, messageHandler, op, protocol, reconnect, reconnector, retryCount, server, ws;
-      server = _arg.server, protocol = _arg.protocol, messageHandler = _arg.messageHandler, events = _arg.events, reconnect = _arg.reconnect;
+      var $deferred, $ws, attachEvents, attachMessageEvent, callOrVal, clearConnectionKeeper, events, keepalive, messageHandler, op, protocol, reconnect, reconnector, server, timeoutId, ws;
+      server = _arg.server, protocol = _arg.protocol, messageHandler = _arg.messageHandler, events = _arg.events, reconnect = _arg.reconnect, keepalive = _arg.keepalive;
       $deferred = $.Deferred();
       if (server == null) {
         server = defaultServer;
       }
       ws = new WebSocket(server, protocol);
+      timeoutId = {};
+      clearConnectionKeeper = function() {
+        if (reconnect) {
+          if (timeoutId.reconnect != null) {
+            clearTimeout(timeoutId.reconnect);
+          }
+          $(ws).off('close.reconnect');
+          reconnect = false;
+        }
+        if (keepalive) {
+          if (timeoutId.keepalive != null) {
+            clearTimeout(timeoutId.keepalive);
+          }
+          return keepalive = false;
+        }
+      };
       op = {
         'send': function(message) {
-          return ws.send(message);
+          ws.send(message);
         },
         'close': function() {
-          if (reconnect) {
-            $(ws).off('close.reconnect');
-            reconnect = false;
-          }
+          clearConnectionKeeper();
           ws.close();
         }
       };
@@ -186,10 +199,7 @@
           $deferred.resolve(op, e);
         },
         'error.promise': function(e) {
-          if (reconnect) {
-            $(ws).off('close.reconnect');
-            reconnect = false;
-          }
+          clearConnectionKeeper();
           $deferred.reject(e);
         }
       });
@@ -202,11 +212,22 @@
           }));
         }
       })($ws);
-      retryCount = 0;
+      callOrVal = function(fnOrVal, toVal, count, defaultValue) {
+        var _ref;
+        return +((_ref = typeof fnOrVal === "function" ? fnOrVal(count) : void 0) != null ? _ref : toVal(fnOrVal != null ? fnOrVal : defaultValue, count));
+      };
       (reconnector = function($s) {
+        var retryCount;
+        retryCount = 0;
         if (reconnect) {
           $s.on('close.reconnect', (function() {
-            setTimeout((function() {
+            var timeout;
+            timeout = callOrVal(reconnect.interval, (function(v) {
+              return v;
+            }), retryCount, 0) + callOrVal(reconnect.deceleration, (function(v, c) {
+              return v * c;
+            }), retryCount, 1000) + Math.random() * 5000;
+            timeoutId.reconnect = setTimeout(function() {
               var $rews;
               ws = new WebSocket(server, protocol);
               $rews = $(ws).on('open.reconnect', function(e) {
@@ -216,22 +237,36 @@
               attachMessageEvent($rews);
               reconnector($rews);
               attachEvents($rews, reconnect.events);
-            }), (reconnect.interval != null ? reconnect.interval : reconnect.interval = 0) + (reconnect.deceleration != null ? reconnect.deceleration : reconnect.deceleration = 1000) * retryCount);
+            }, timeout);
             ++retryCount;
           }));
         }
       })($ws);
       (attachEvents = function($s, es) {
-        var k, v, _results;
+        var k, v;
         if (es) {
-          _results = [];
           for (k in es) {
             v = es[k];
-            _results.push($s.on(k, v));
+            $s.on(k, v);
           }
-          return _results;
         }
       })($ws, events);
+      (function() {
+        var count, pingSender;
+        count = 0;
+        (pingSender = function() {
+          if (keepalive) {
+            timeoutId.keepalive = setTimeout(function() {
+              var _ref, _ref1;
+              ws.send((_ref = typeof keepalive.message === "function" ? keepalive.message(count) : void 0) != null ? _ref : (_ref1 = keepalive.message) != null ? _ref1 : '');
+              ++count;
+              pingSender();
+            }, callOrVal(keepalive.interval, (function(v) {
+              return v;
+            }), count, 60000));
+          }
+        })();
+      })();
       return $deferred.promise();
     };
     return this;
