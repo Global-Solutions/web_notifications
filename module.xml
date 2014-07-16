@@ -6,10 +6,4 @@
   <name>${module.name}</name>
   <vendor>${module.vendor}</vendor>
   <description>${module.description}</description>
-  <dependencies>
-    <dependency>
-      <module-id>jp.co.gsol.wiki.wiki_imbox_plugin</module-id>
-      <verified-version>1.0.0</verified-version>
-    </dependency>
-  </dependencies>
 </module>

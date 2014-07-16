@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 
 import jp.co.intra_mart.common.platform.log.Logger;
+import jp.co.intra_mart.foundation.context.Contexts;
 import jp.co.intra_mart.foundation.context.model.AccountContext;
 
 import com.caucho.websocket.AbstractWebSocketListener;
@@ -20,10 +21,13 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
     final Logger logger = Logger.getLogger();
 
     final WebSocketTaker taker;
+    AccountContext ac;
     public ResinWebSocketListener(final WebSocketTaker webSocketTaker,
             final AccountContext accountContext) {
         // TODO 自動生成されたコンストラクター・スタブ
         taker = webSocketTaker;
+        ac = accountContext;
+        WebSocketContextPool.reserve(String.valueOf(this.hashCode())); //ac.getTenantId() + ":" + ac.getUserCd());
     }
 
     @Override
@@ -31,7 +35,8 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
       throws IOException {
         // called when the connection starts
         taker.register(context);
-        logger.debug("start: {} timeout: {}", context.toString(), context.getTimeout());
+        WebSocketContextPool.registerContext(String.valueOf(this.hashCode()) /*ac.getTenantId() + ":" + ac.getUserCd()*/, context);
+        logger.debug("start: {} timeout: {} key: {}", context.toString(), context.getTimeout(), this.hashCode());
     }
 
     @Override
@@ -73,6 +78,7 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
     // called when the client closes disconnects
         taker.onDisconnect(context);
         taker.unregister(context);
+        WebSocketContextPool.unregisterContext(String.valueOf(this.hashCode())); //ac.getTenantId() + ":" + ac.getUserCd());
         logger.debug("disconnect: {}", context.toString());
     }
 }
