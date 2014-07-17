@@ -1,4 +1,4 @@
-package jp.co.gsol.oss.notifications;
+package jp.co.gsol.oss.notifications.impl.contrib;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -7,6 +7,7 @@ import java.util.concurrent.Future;
 
 import com.google.common.base.Optional;
 
+import jp.co.gsol.oss.notifications.impl.AbstractDeferringTask;
 import jp.co.intra_mart.foundation.cache.Cache;
 import jp.co.intra_mart.foundation.cache.CacheManager;
 import jp.co.intra_mart.foundation.cache.CacheManagerFactory;

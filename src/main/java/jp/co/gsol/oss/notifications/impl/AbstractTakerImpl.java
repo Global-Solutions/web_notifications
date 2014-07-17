@@ -1,7 +1,9 @@
-package jp.co.gsol.oss.notifications;
+package jp.co.gsol.oss.notifications.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import jp.co.gsol.oss.notifications.WebSocketTaker;
 
 import com.caucho.websocket.WebSocketContext;
 import com.google.common.base.Optional;

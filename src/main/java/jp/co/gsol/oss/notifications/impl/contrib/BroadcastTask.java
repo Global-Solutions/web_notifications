@@ -1,4 +1,4 @@
-package jp.co.gsol.oss.notifications;
+package jp.co.gsol.oss.notifications.impl.contrib;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,6 +7,7 @@ import java.util.Map;
 
 import net.arnx.jsonic.JSON;
 
+import jp.co.gsol.oss.notifications.impl.AbstractWebSocketTask;
 import jp.co.intra_mart.foundation.cache.Cache;
 import jp.co.intra_mart.foundation.cache.CacheManager;
 import jp.co.intra_mart.foundation.cache.CacheManagerFactory;

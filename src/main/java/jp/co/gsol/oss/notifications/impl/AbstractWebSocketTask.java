@@ -1,4 +1,4 @@
-package jp.co.gsol.oss.notifications;
+package jp.co.gsol.oss.notifications.impl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,6 +14,8 @@ import java.util.concurrent.Future;
 import com.caucho.websocket.WebSocketContext;
 import com.google.common.base.Optional;
 
+import jp.co.gsol.oss.notifications.WebSocketContextPool;
+import jp.co.gsol.oss.notifications.impl.contrib.IntervalDeferringTask;
 import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
 import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
 import jp.co.intra_mart.foundation.asynchronous.TaskManager;

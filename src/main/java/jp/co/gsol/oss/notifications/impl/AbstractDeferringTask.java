@@ -1,4 +1,4 @@
-package jp.co.gsol.oss.notifications;
+package jp.co.gsol.oss.notifications.impl;
 
 import java.util.HashMap;
 import java.util.Map;
