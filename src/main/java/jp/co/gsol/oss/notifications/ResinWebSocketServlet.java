@@ -15,7 +15,9 @@ import com.caucho.websocket.WebSocketServletRequest;
 import com.google.common.base.Optional;
 
 import jp.co.intra_mart.common.platform.log.Logger;
+import jp.co.intra_mart.foundation.asynchronous.InvalidTaskException;
 import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
+import jp.co.intra_mart.foundation.asynchronous.TaskIllegalStateException;
 import jp.co.intra_mart.foundation.asynchronous.TaskManager;
 import jp.co.intra_mart.foundation.context.Contexts;
 import jp.co.intra_mart.foundation.context.model.AccountContext;
@@ -39,19 +41,22 @@ public class ResinWebSocketServlet extends GenericServlet {
         final String protocol = req.getHeader("Sec-WebSocket-Protocol");
         final Optional<WebSocketTaker> taker = WebSocketTakerManager.getProtocolsTaker(protocol);
         if (taker.isPresent()) {
-            AccountContext ac = Contexts.get(AccountContext.class);
-            final WebSocketListener listener = new ResinWebSocketListener(taker.get(), ac);
+            final AccountContext ac = Contexts.get(AccountContext.class);
+            final WebSocketTaker wst = taker.get();
+            final WebSocketListener listener = new ResinWebSocketListener(wst, ac);
             res.setHeader("Sec-WebSocket-Protocol", protocol);
             final WebSocketServletRequest wsRequest = (WebSocketServletRequest)
                     ((TransitionLogHttpServletRequestWrapper) request).getRequest();
             wsRequest.startWebSocket(listener);
-            try {
-                final Map<String, Object> param = new HashMap<>();
-                param.put("key", String.valueOf(listener.hashCode()));
-                TaskManager.addParallelizedTask("jp.co.gsol.oss.notifications.AbstractWebSocketTask", param);
-            } catch (TaskControlException e) {
-                // TODO 自動生成された catch ブロック
-                e.printStackTrace();
+            if (wst.processClass().isPresent()) {
+                try {
+                    final Map<String, Object> param = new HashMap<>();
+                    param.put("key", String.valueOf(listener.hashCode()));
+                    TaskManager.addParallelizedTask(wst.processClass().get(), param);
+                } catch (TaskControlException e) {
+                    // TODO 自動生成された catch ブロック
+                    e.printStackTrace();
+                }
             }
         } else {
             Logger.getLogger().debug("invalid protocol: {}", protocol);

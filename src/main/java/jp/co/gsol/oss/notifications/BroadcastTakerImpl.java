@@ -1,21 +1,23 @@
 package jp.co.gsol.oss.notifications;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import jp.co.intra_mart.common.platform.log.Logger;
-
 import com.caucho.websocket.WebSocketContext;
+import com.google.common.base.Optional;
 
-public class EchoTakerImpl extends AbstractTakerImpl {
+public class BroadcastTakerImpl extends AbstractTakerImpl {
+
+    @Override
+    public Optional<String> processClass() {
+        return Optional.of(BroadcastTask.class.getCanonicalName());
+    }
+
     @Override
     public void onReadText(final WebSocketContext context,
             final String key, final String message) throws IOException {
-        synchronized (context) {
-            final PrintWriter out = context.startTextMessage();
-            out.println(message);
-            out.close();
-        }
+        BroadcastManager.schedule(key, message);
         Logger.getLogger().debug(message);
     }
+
 }

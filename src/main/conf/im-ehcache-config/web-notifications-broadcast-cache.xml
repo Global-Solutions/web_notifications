@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<im-ehcache-config xmlns="http://www.intra-mart.jp/cache/ehcache/config"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.intra-mart.jp/cache/ehcache/config im-ehcache-config.xsd ">
+
+   <cache name="webNotificationsBroadcastCache"
+         enable="true"
+         max-bytes-memory="1m"
+         time-to-idle-seconds="300"
+         time-to-live-seconds="600" />
+
+</im-ehcache-config>

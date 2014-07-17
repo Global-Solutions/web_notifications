@@ -21,20 +21,21 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
     final Logger logger = Logger.getLogger();
 
     final WebSocketTaker taker;
-    AccountContext ac;
+    final String key = String.valueOf(this.hashCode());
+    //AccountContext ac;
     public ResinWebSocketListener(final WebSocketTaker webSocketTaker,
             final AccountContext accountContext) {
         // TODO 自動生成されたコンストラクター・スタブ
         taker = webSocketTaker;
-        ac = accountContext;
-        WebSocketContextPool.reserve(String.valueOf(this.hashCode())); //ac.getTenantId() + ":" + ac.getUserCd());
+        WebSocketContextPool.reserve(key); //ac.getTenantId() + ":" + ac.getUserCd());
     }
 
     @Override
     public final void onStart(final WebSocketContext context)
       throws IOException {
         // called when the connection starts
-        taker.register(context);
+        taker.register(context, key);
+        taker.onStart(context, key);
         WebSocketContextPool.registerContext(String.valueOf(this.hashCode()) /*ac.getTenantId() + ":" + ac.getUserCd()*/, context);
         logger.debug("start: {} timeout: {} key: {}", context.toString(), context.getTimeout(), this.hashCode());
     }
@@ -49,7 +50,7 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
                 sb.append(line);
             }
             final String message = sb.toString();
-            taker.onReadText(context, message);
+            taker.onReadText(context, key, message);
             logger.debug("readText: {}", context.toString());
         } catch (IOException e) {
             // TODO 自動生成された catch ブロック
@@ -59,25 +60,25 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
 
     @Override
     public void onReadBinary(final WebSocketContext context, final InputStream is) {
-        taker.onReadBinary(context, is);
+        taker.onReadBinary(context, key, is);
         logger.debug("readBinary: {}", context.toString());
     }
     @Override
     public final void onClose(final WebSocketContext context) throws IOException {
     // called when the client closes gracefully
-        taker.onClose(context);
+        taker.onClose(context, key);
         logger.debug("close: {}", context.toString());
     }
     @Override
     public void onTimeout(final WebSocketContext context) {
-        taker.onTimeout(context);
+        taker.onTimeout(context, key);
         logger.debug("timeout: {}", context.toString());
     }
     @Override
     public final void onDisconnect(final WebSocketContext context) throws IOException {
     // called when the client closes disconnects
-        taker.onDisconnect(context);
-        taker.unregister(context);
+        taker.onDisconnect(context, key);
+        taker.unregister(context, key);
         WebSocketContextPool.unregisterContext(String.valueOf(this.hashCode())); //ac.getTenantId() + ":" + ac.getUserCd());
         logger.debug("disconnect: {}", context.toString());
     }

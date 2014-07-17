@@ -4,20 +4,25 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.caucho.websocket.WebSocketContext;
+import com.google.common.base.Optional;
 
 public interface WebSocketTaker {
 
-    void register(WebSocketContext context);
+    Optional<String> processClass();
 
-    void onClose(WebSocketContext context);
+    void register(final WebSocketContext context, final String key);
 
-    void onDisconnect(WebSocketContext context);
+    void onStart(final WebSocketContext context, final String key);
 
-    void onTimeout(WebSocketContext context);
+    void onClose(final WebSocketContext context, final String key);
 
-    void onReadBinary(WebSocketContext context, InputStream is);
+    void onDisconnect(final WebSocketContext context, final String key);
 
-    void onReadText(WebSocketContext context, String message) throws IOException;
+    void onTimeout(final WebSocketContext context, final String key);
 
-    void unregister(WebSocketContext context);
+    void onReadBinary(final WebSocketContext context, final String key, InputStream is);
+
+    void onReadText(final WebSocketContext context, final String key, String message) throws IOException;
+
+    void unregister(final WebSocketContext context, final String key);
 }

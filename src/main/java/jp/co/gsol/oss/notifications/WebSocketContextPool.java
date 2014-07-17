@@ -1,11 +1,12 @@
 package jp.co.gsol.oss.notifications;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -15,10 +16,10 @@ import com.google.common.base.Optional;
 public class WebSocketContextPool {
 
     static final long waitingTimeout = 10_000;
-    static final Map<String, WebSocketContext> pool = new HashMap<>();
-    static final Map<String, Object> waitings = new HashMap<>();
-    static final List<String> reserved = new ArrayList<>();
-    static final List<String> aliving = new ArrayList<>();
+    static final Map<String, WebSocketContext> pool = new ConcurrentHashMap<>();
+    static final Map<String, Object> waitings = new ConcurrentHashMap<>();
+    static final List<String> reserved = new CopyOnWriteArrayList<>();
+    static final List<String> aliving = new CopyOnWriteArrayList<>();
     static final long sweepInterval = 300_000;
     static long lastSweepTime = System.currentTimeMillis();
 
@@ -66,6 +67,7 @@ public class WebSocketContextPool {
                         } catch (final InterruptedException e) {
                             // TODO 自動生成された catch ブロック
                             e.printStackTrace();
+                            return Optional.absent();
                         }
                 }
                 return context(key);
@@ -82,14 +84,15 @@ public class WebSocketContextPool {
         aliving.remove(key);
         sweepSession();
     }
-    static void sweepSession() {
+    static synchronized void sweepSession() {
         final long now = System.currentTimeMillis();
         if (now - lastSweepTime > sweepInterval
          && aliving.size() > pool.size() + reserved.size()) {
-            final Iterator<String> it = aliving.iterator();
-            while (it.hasNext())
-                if (notRegistered(it.next()))
-                    it.remove();
+            final List<String> eliminations = new ArrayList<>();
+            for (String key : aliving)
+                if (notRegistered(key))
+                    eliminations.add(key);
+            aliving.removeAll(eliminations);
             lastSweepTime = now;
         }
     }
