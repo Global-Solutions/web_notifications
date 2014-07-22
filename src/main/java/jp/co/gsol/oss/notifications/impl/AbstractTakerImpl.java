@@ -38,4 +38,8 @@ public abstract class AbstractTakerImpl implements WebSocketTaker {
     public Optional<String> processClass() {
         return Optional.absent();
     }
+    @Override
+    public int maxRequestCount() {
+        return 10;
+    }
 }

@@ -10,6 +10,8 @@ public interface WebSocketTaker {
 
     Optional<String> processClass();
 
+    int maxRequestCount();
+
     void register(final WebSocketContext context, final String key);
 
     void onStart(final WebSocketContext context, final String key);

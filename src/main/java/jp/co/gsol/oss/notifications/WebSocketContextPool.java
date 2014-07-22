@@ -1,13 +1,14 @@
 package jp.co.gsol.oss.notifications;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 
 import com.caucho.websocket.WebSocketContext;
@@ -19,13 +20,13 @@ public class WebSocketContextPool {
     static final Map<String, WebSocketContext> pool = new ConcurrentHashMap<>();
     static final Map<String, Object> waitings = new ConcurrentHashMap<>();
     static final List<String> reserved = new CopyOnWriteArrayList<>();
-    static final List<String> aliving = new CopyOnWriteArrayList<>();
+    static final Map<String, Integer> aliving = new ConcurrentHashMap<>();
     static final long sweepInterval = 300_000;
     static long lastSweepTime = System.currentTimeMillis();
 
     static public void reserve(final String key) {
         reserved.add(key);
-        aliving.add(key);
+        aliving.put(key, 0);
     }
     static public void registerContext(final String key, final WebSocketContext context) {
         pool.put(key, context);
@@ -49,8 +50,8 @@ public class WebSocketContextPool {
             waitings.remove(key);
         }
     }
-    public static Future<Optional<WebSocketContext>> futureGet(final String key, final ExecutorService executor) {
-        return executor.submit(new Callable<Optional<WebSocketContext>>() {
+    public static Future<Optional<WebSocketContext>> futureGet(final String key, final ForkJoinPool fjp) {
+        return fjp.submit(new Callable<Optional<WebSocketContext>>() {
             @Override
             public Optional<WebSocketContext> call() {
                 if (notRegistered(key))
@@ -78,7 +79,12 @@ public class WebSocketContextPool {
         return !reserved.contains(key) && !pool.containsKey(key);
     }
     public static boolean sameSession(final String key) {
-        return aliving.contains(key);
+        if (aliving.containsKey(key)) {
+            aliving.put(key, 0);
+            return true;
+        }
+
+        return false;
     }
     public static void clearSession(final String key) {
         aliving.remove(key);
@@ -88,12 +94,20 @@ public class WebSocketContextPool {
         final long now = System.currentTimeMillis();
         if (now - lastSweepTime > sweepInterval
          && aliving.size() > pool.size() + reserved.size()) {
-            final List<String> eliminations = new ArrayList<>();
-            for (String key : aliving)
-                if (notRegistered(key))
-                    eliminations.add(key);
-            aliving.removeAll(eliminations);
+            final Iterator<Map.Entry<String, Integer>> it = aliving.entrySet().iterator();
+            while (it.hasNext()) {
+                final Map.Entry<String, Integer> item = it.next();
+                if (notRegistered(item.getKey()))
+                    it.remove();
+            }
             lastSweepTime = now;
         }
+    }
+    public static boolean zombieSession(final String key, final int maxCount) {
+        final Integer count = aliving.get(key);
+        if (count == null || count > maxCount)
+            return true;
+        aliving.put(key, count + 1);
+        return false;
     }
 }

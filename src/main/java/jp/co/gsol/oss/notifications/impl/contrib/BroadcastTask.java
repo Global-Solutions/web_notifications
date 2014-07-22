@@ -38,16 +38,13 @@ public class BroadcastTask extends AbstractWebSocketTask {
                 messages.add(JSON.encode(message));
             }
         processTime = now;
-        if (lastTime != now)
-            lastProcessTime = lastTime;
-        else
-            lastProcessTime = now;
+        lastProcessTime = lastTime != now ? lastTime : now;
         return messages;
     }
 
     @Override
     protected Map<String, String> done(final String key, final boolean sent) {
-        Map<String, String> param = new HashMap<>();
+        final Map<String, String> param = new HashMap<>();
         if (processTime > 0) {
             if (sent || lastProcessTime == processTime)
                 param.put("lastTime", String.valueOf(processTime));

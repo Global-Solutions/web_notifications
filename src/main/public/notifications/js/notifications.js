@@ -162,7 +162,7 @@
       return defaultServer = server;
     };
     this.connect = function(_arg) {
-      var $deferred, $ws, attachEvents, attachMessageEvent, callOrVal, clearConnectionKeeper, events, keepalive, messageHandler, op, protocol, reconnect, reconnector, server, timeoutId, ws;
+      var $deferred, $ws, attachEvents, attachMessageEvent, callOrVal, clearConnectionKeeper, events, keepalive, messageHandler, op, protocol, reconnect, reconnector, retryCount, server, timeoutId, ws;
       server = _arg.server, protocol = _arg.protocol, messageHandler = _arg.messageHandler, events = _arg.events, reconnect = _arg.reconnect, keepalive = _arg.keepalive;
       $deferred = $.Deferred();
       if (server == null) {
@@ -187,7 +187,11 @@
       };
       op = {
         'send': function(message) {
-          ws.send(message);
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(message);
+            return true;
+          }
+          return false;
         },
         'close': function() {
           clearConnectionKeeper();
@@ -199,8 +203,10 @@
           $deferred.resolve(op, e);
         },
         'error.promise': function(e) {
-          clearConnectionKeeper();
-          $deferred.reject(e);
+          if ($deferred.state === 'pending') {
+            clearConnectionKeeper();
+            $deferred.reject(e);
+          }
         }
       });
       (attachMessageEvent = function($s) {
@@ -216,9 +222,8 @@
         var _ref;
         return +((_ref = typeof fnOrVal === "function" ? fnOrVal(count) : void 0) != null ? _ref : toVal(fnOrVal != null ? fnOrVal : defaultValue, count));
       };
+      retryCount = 0;
       (reconnector = function($s) {
-        var retryCount;
-        retryCount = 0;
         if (reconnect) {
           $s.on('close.reconnect', (function() {
             var timeout;
@@ -237,7 +242,7 @@
               attachMessageEvent($rews);
               reconnector($rews);
               attachEvents($rews, reconnect.events);
-            }, timeout);
+            }, Math.max(0, timeout));
             ++retryCount;
           }));
         }
@@ -252,18 +257,18 @@
         }
       })($ws, events);
       (function() {
-        var count, pingSender;
-        count = 0;
+        var pingCount, pingSender;
+        pingCount = 0;
         (pingSender = function() {
           if (keepalive) {
             timeoutId.keepalive = setTimeout(function() {
               var _ref, _ref1;
-              ws.send((_ref = typeof keepalive.message === "function" ? keepalive.message(count) : void 0) != null ? _ref : (_ref1 = keepalive.message) != null ? _ref1 : '');
-              ++count;
+              op.send((_ref = typeof keepalive.message === "function" ? keepalive.message(pingCount) : void 0) != null ? _ref : (_ref1 = keepalive.message) != null ? _ref1 : '');
+              ++pingCount;
               pingSender();
             }, callOrVal(keepalive.interval, (function(v) {
               return v;
-            }), count, 60000));
+            }), pingCount, 60000));
           }
         })();
       })();

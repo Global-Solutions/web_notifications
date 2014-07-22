@@ -7,12 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import com.caucho.websocket.WebSocketContext;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 
 import jp.co.gsol.oss.notifications.WebSocketContextPool;
 import jp.co.gsol.oss.notifications.impl.contrib.IntervalDeferringTask;
@@ -22,6 +20,11 @@ import jp.co.intra_mart.foundation.asynchronous.TaskManager;
 import jp.co.intra_mart.foundation.asynchronous.report.RegisteredParallelizedTaskInfo;
 
 public abstract class AbstractWebSocketTask extends AbstractTask {
+    protected static final int deferringInterval = 30_000;
+    protected static final Map<String, String> deferringIntervalParam =
+            ImmutableMap.of("interval", String.valueOf(deferringInterval));
+    protected static final int retryLimit = 10;
+    protected static final int retryDeceleation = 1_000;
     @Override
     public final void run() {
         final Map<String, ?> param = getParameter();
@@ -32,7 +35,7 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
             try {
                 final String retryCount = (String) param.get("retryCount");
                 final int count = retryCount != null ? Integer.valueOf(retryCount) : 0;
-                Optional<Map<String, String>> retryParam = retryParam(count);
+                Optional<Map<String, String>> retryParam = retryParam(key, count);
                 if (retryParam.isPresent()) {
                     nextParam.put("deferringParam", retryParam.get());
                     nextParam.put("deferredClass", this.getClass().getCanonicalName());
@@ -46,34 +49,29 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
         else
             nextParam.put("retryCount", String.valueOf(0));
 
-        final ExecutorService es = Executors.newSingleThreadExecutor();
-        final Future<Optional<WebSocketContext>> future = WebSocketContextPool.futureGet(key, es);
         Optional<WebSocketContext> context = Optional.absent();
         try {
-            context = future.get();
+            context = WebSocketContextPool.futureGet(key, ForkJoinCommonPool.commonPool).get();
         } catch (ExecutionException | InterruptedException e) {
             // TODO 自動生成された catch ブロック
             e.printStackTrace();
         }
 
         if (!context.isPresent()) {
-            es.shutdown();
             WebSocketContextPool.clearSession(key);
             return;
         }
 
         final Object lastObject = param.get("lastParam");
         final Map<String, String> lastParam = lastObject instanceof Map<?, ?>
-                                            ? (Map<String, String>) lastObject : new HashMap<String, String>();
+                                            ? (Map<String, String>) lastObject : initialParam(key);
         final List<String> processed = processedMessage(key, lastParam);
         if ((context = WebSocketContextPool.context(key)).isPresent()) {
             nextParam.put("lastParam", done(key, sendMessage(processed, context.get())));
             try {
                 final Set<RegisteredParallelizedTaskInfo> running = TaskManager.getRegisteredInfo().getParallelizedTaskQueueInfo().getRunningTasksInfo();
                 for (RegisteredParallelizedTaskInfo info : running)
-                    System.out.println("runnning:" + info.getMessageId() + "@" + info.getNode());
-                for (RegisteredParallelizedTaskInfo info : TaskManager.getRegisteredInfo().getParallelizedTaskQueueInfo().getWaitingTasksInfo())
-                    System.out.println(info.getMessageId() + "@" + info.getNode());
+                    System.out.println("k" + key + "runnning:" + info.getMessageId() + "@" + info.getNode());
 
                 final Optional<String> deferringTask = deferringTask();
                 if (deferringTask.isPresent()) {
@@ -87,7 +85,6 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
             }
         } else
             WebSocketContextPool.clearSession(key);
-        es.shutdown();
     }
     private boolean sendMessage(final List<String> messages, final WebSocketContext context) {
         boolean sent = false;
@@ -108,38 +105,23 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
         return sent;
     }
 
-    abstract protected List<String> processedMessage(final String key, final Map<String, String> param); //{
-    //    //if (param != null && Long.valueOf(((String) param.get("lastTime"))) + 10000 > System.currentTimeMillis())
-    //    //    return Optional.absent();
-    //    AccountContext ac = Contexts.get(AccountContext.class);
-    //    MyBoxService to = Services.get(MyBoxService.class);
-    //    System.out.println("uc:" + ac.getUserCd());
-    //    try {
-    //        final StringBuilder sb = new StringBuilder();
-    //        for (jp.co.intra_mart.imbox.model.Thread t : to.getThreads(null))
-    //            for (Message m : t.getMessages())
-    //                sb.append(m.getMessageText());
-    //        return Optional.of(ac.getUserCd() + ":" + sb.toString());
-    //    } catch (IMBoxException e1) {
-    //        // TODO 自動生成された catch ブロック
-    //        e1.printStackTrace();
-    //    }
-    //    return Optional.absent();
-    //}
+    abstract protected List<String> processedMessage(final String key, final Map<String, String> param);
     abstract protected Map<String, String> done(final String key, final boolean sent);
+
     protected Optional<String> deferringTask() {
         return Optional.of(IntervalDeferringTask.class.getCanonicalName());
     }
-    protected Map<String, String> deferringParam(final String key) {
-        final Map<String, String> param = new HashMap<>();
-        param.put("interval", "10000");
-        return param;
+    protected Map<String, String> initialParam(final String key) {
+        return new HashMap<>();
     }
-    protected Optional<Map<String, String>> retryParam(final Integer count) {
-        if (count > 10)
+    protected Map<String, String> deferringParam(final String key) {
+        return deferringIntervalParam;
+    }
+    protected Optional<Map<String, String>> retryParam(final String key, final int count) {
+        if (count > retryLimit)
             return Optional.absent();
         final Map<String, String> param = new HashMap<>();
-        param.put("interval", String.valueOf(1_000 * count));
+        param.put("interval", String.valueOf(retryDeceleation * count));
         return Optional.of(param);
     }
 }

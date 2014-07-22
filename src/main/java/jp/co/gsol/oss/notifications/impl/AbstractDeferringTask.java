@@ -3,8 +3,7 @@ package jp.co.gsol.oss.notifications.impl;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 
 import com.google.common.base.Optional;
@@ -24,20 +23,20 @@ public abstract class AbstractDeferringTask extends AbstractTask {
             ? (Map<String, String>) deferringParam : new HashMap<String, String>();
         final String deferredCount = (String) param.get("deferredCount");
         final int count = deferredCount != null ? Integer.valueOf(deferredCount) : 0;
-        final ExecutorService es = Executors.newSingleThreadExecutor();
         final Map<String, Object> nextParam = new HashMap<>(param);
         try {
             final Optional<Boolean> advance =
                     signal(key, signalParam,
-                            count, es).get();
+                            count, ForkJoinCommonPool.commonPool).get();
             if (advance.isPresent()) {
+                String advanceClass = deferredClass;
                 if (advance.get()) {
                     nextParam.put("deferredCount", String.valueOf(0));
-                    TaskManager.addParallelizedTask(deferredClass, nextParam);
                 } else {
                     nextParam.put("deferredCount", String.valueOf(count + 1));
-                    TaskManager.addParallelizedTask(this.getClass().getCanonicalName(), nextParam);
+                    advanceClass = this.getClass().getCanonicalName();
                 }
+                TaskManager.addParallelizedTask(advanceClass, nextParam);
             }
         } catch (InterruptedException | ExecutionException e) {
             // TODO 自動生成された catch ブロック
@@ -50,5 +49,5 @@ public abstract class AbstractDeferringTask extends AbstractTask {
     abstract protected Future<Optional<Boolean>> signal(
             final String key, final Map<String, String> param,
             final int deferredCount,
-            final ExecutorService es);
+            final ForkJoinPool fjp);
 }

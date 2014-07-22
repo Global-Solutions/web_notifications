@@ -116,8 +116,10 @@ $ = @jQuery
 
         op =
             'send': (message) ->
-                ws.send message
-                return
+                if ws.readyState is WebSocket.OPEN
+                    ws.send message
+                    return true
+                false
             'close': ->
                 clearConnectionKeeper()
                 ws.close()
@@ -128,8 +130,9 @@ $ = @jQuery
                 $deferred.resolve op, e
                 return
             'error.promise': (e) ->
-                clearConnectionKeeper()
-                $deferred.reject e
+                if $deferred.state is 'pending'
+                    clearConnectionKeeper()
+                    $deferred.reject e
                 return
         (attachMessageEvent = ($s) ->
             $s.on 'message.handler',((e) ->
@@ -139,8 +142,8 @@ $ = @jQuery
             return
         ) $ws
         callOrVal = (fnOrVal, toVal, count, defaultValue) -> +(fnOrVal?(count) ? toVal(fnOrVal ? defaultValue, count))
+        retryCount = 0
         (reconnector = ($s) ->
-            retryCount = 0
             $s.on 'close.reconnect', (->
                 timeout = callOrVal(reconnect.interval, ((v) -> v), retryCount, 0) + callOrVal(reconnect.deceleration, ((v, c) -> v * c), retryCount, 1000) + Math.random() * 5000
                 timeoutId.reconnect = setTimeout ->
@@ -152,7 +155,7 @@ $ = @jQuery
                     reconnector $rews
                     attachEvents $rews, reconnect.events
                     return
-                , timeout
+                , (Math.max 0, timeout)
                 ++retryCount
                 return
             ) if reconnect
@@ -163,14 +166,14 @@ $ = @jQuery
             return
         ) $ws, events
         (->
-            count = 0
+            pingCount = 0
             (pingSender = ->
                 timeoutId.keepalive = setTimeout ->
-                    ws.send keepalive.message?(count) ? (keepalive.message ? '')
-                    ++count
+                    op.send keepalive.message?(pingCount) ? (keepalive.message ? '')
+                    ++pingCount
                     pingSender()
                     return
-                , (callOrVal keepalive.interval, ((v) -> v), count, 60000) if keepalive
+                , (callOrVal keepalive.interval, ((v) -> v), pingCount, 60000) if keepalive
                 return
             )()
             return
