@@ -20,9 +20,12 @@ import jp.co.intra_mart.foundation.asynchronous.TaskManager;
 import jp.co.intra_mart.foundation.asynchronous.report.RegisteredParallelizedTaskInfo;
 
 public abstract class AbstractWebSocketTask extends AbstractTask {
-    protected static final int deferringInterval = 30_000;
+    protected static final int deferringInterval = 10_000;
+    protected static final int deferringRepeat = 6;
     protected static final Map<String, String> deferringIntervalParam =
-            ImmutableMap.of("interval", String.valueOf(deferringInterval));
+            ImmutableMap
+            .of("interval", String.valueOf(deferringInterval),
+                "repeat", String.valueOf(deferringRepeat));
     protected static final int retryLimit = 10;
     protected static final int retryDeceleation = 1_000;
     @Override
@@ -64,10 +67,12 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
 
         final Object lastObject = param.get("lastParam");
         final Map<String, String> lastParam = lastObject instanceof Map<?, ?>
-                                            ? (Map<String, String>) lastObject : initialParam(key);
-        final List<String> processed = processedMessage(key, lastParam);
+                                            ? (Map<String, String>) lastObject : null;
+
+        final List<String> processed = processedMessage(key,
+                lastParam != null && !lastParam.isEmpty() ? lastParam : initialParam(key));
         if ((context = WebSocketContextPool.context(key)).isPresent()) {
-            nextParam.put("lastParam", done(key, sendMessage(processed, context.get())));
+                nextParam.put("lastParam", done(key, sendMessage(processed, context.get())));
             try {
                 final Set<RegisteredParallelizedTaskInfo> running = TaskManager.getRegisteredInfo().getParallelizedTaskQueueInfo().getRunningTasksInfo();
                 for (RegisteredParallelizedTaskInfo info : running)
@@ -118,10 +123,11 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
         return deferringIntervalParam;
     }
     protected Optional<Map<String, String>> retryParam(final String key, final int count) {
-        if (count > retryLimit)
+        if (count >= retryLimit)
             return Optional.absent();
         final Map<String, String> param = new HashMap<>();
         param.put("interval", String.valueOf(retryDeceleation * count));
+        param.put("repeat", String.valueOf(1));
         return Optional.of(param);
     }
 }

@@ -2,7 +2,7 @@ $ = @jQuery
 
 @notifications = (->
     available = Notification?
-    availableSchedule = false
+    #availableSchedule = false
     icon = ''
 
     @$ = (_$) ->
@@ -10,30 +10,41 @@ $ = @jQuery
     @defaultIcon = (_icon) ->
         icon = _icon if _icon?
 
-    @scheduleRequestingPermissionOnLoad = (required) ->
-        availableSchedule = available and required ? available
+    #@scheduleRequestingPermissionOnLoad = (required) ->
+    #    availableSchedule = available and required ? available
 
-    availableNotPermission = (_Notification) ->
-        availableSchedule and _Notification.permission isnt 'granted'
+    permissionNotGranted = (_Notification) ->
+        _Notification.permission isnt 'granted'
 
     @requestPermission = ->
-        if availableNotPermission Notification
+        $deferred = $.Deferred()
+        if not available
+            return $deferred.reject().promise()
+        if permissionNotGranted Notification
             Notification.requestPermission (status) ->
                 if Notification.permission isnt status
                     Notification.permission = status
+                if permissionNotGranted Notification
+                    $deferred.reject()
+                else
+                    $deferred.resolve()
                 return
-        return
+        else
+            $deferred.resolve()
+        $deferred.promise()
 
     @onLoadHandler = =>
-        @requestPermission()
-        $('body').one 'click', @requestPermission
+        $deferred = $.Deferred()
+        @requestPermission().done -> $deferred.resolve()
+        $('body').one 'click', =>
+            @requestPermission().done -> $deferred.resolve()
         icon = $('link[rel=icon]').attr 'href'
-        return
+        $deferred.promise()
 
-    @scheduleOnLoadEvent = =>
-        if @scheduleRequestingPermissionOnLoad()
-            $(window).on 'load', @onLoadHandler
-        return
+    #@scheduleOnLoadEvent = =>
+    #    if @scheduleRequestingPermissionOnLoad()
+    #        $(window).on 'load', @onLoadHandler
+    #    return
 
     @showNotification = (title, {options, events, timeout, closeOnClick} = {}) ->
         $deferred = $.Deferred()
@@ -89,12 +100,19 @@ $ = @jQuery
             op.close()
             available[server] = true
             $deferred.resolve()
-        ).fail -> $deferred.reject()
-        return $deferred.promise()
+            return
+        ).fail ->
+            $deferred.reject()
+            return
+        $deferred.promise()
 
     @onLoadHandler = =>
+        $deferred = $.Deferred()
         @defaultServer serverPath proto, host, contextPath or $('base').attr('href')?.replace(new RegExp("#{location.origin}(.+)/$"), '$1'), servletPath
-        @available(defaultServer)
+        @available(defaultServer).done ->
+            $deferred.resolve()
+            return
+        $deferred.promise()
 
     @defaultServer = (server = defaultServer) ->
         defaultServer = server

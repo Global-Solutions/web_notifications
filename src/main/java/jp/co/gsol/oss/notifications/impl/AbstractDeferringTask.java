@@ -36,6 +36,7 @@ public abstract class AbstractDeferringTask extends AbstractTask {
                     nextParam.put("deferredCount", String.valueOf(count + 1));
                     advanceClass = this.getClass().getCanonicalName();
                 }
+                System.out.println(key + ":" + count);
                 TaskManager.addParallelizedTask(advanceClass, nextParam);
             }
         } catch (InterruptedException | ExecutionException e) {

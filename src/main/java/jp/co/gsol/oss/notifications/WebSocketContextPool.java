@@ -1,7 +1,5 @@
 package jp.co.gsol.oss.notifications;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +103,7 @@ public class WebSocketContextPool {
     }
     public static boolean zombieSession(final String key, final int maxCount) {
         final Integer count = aliving.get(key);
-        if (count == null || count > maxCount)
+        if (count == null || count >= maxCount)
             return true;
         aliving.put(key, count + 1);
         return false;

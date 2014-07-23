@@ -4,9 +4,8 @@
   $ = this.jQuery;
 
   this.notifications = (function() {
-    var available, availableNotPermission, availableSchedule, icon;
+    var available, icon, permissionNotGranted;
     available = typeof Notification !== "undefined" && Notification !== null;
-    availableSchedule = false;
     icon = '';
     this.$ = function(_$) {
       if (_$ != null) {
@@ -18,34 +17,45 @@
         return icon = _icon;
       }
     };
-    this.scheduleRequestingPermissionOnLoad = function(required) {
-      var _ref;
-      return availableSchedule = (_ref = available && required) != null ? _ref : available;
-    };
-    availableNotPermission = function(_Notification) {
-      return availableSchedule && _Notification.permission !== 'granted';
+    permissionNotGranted = function(_Notification) {
+      return _Notification.permission !== 'granted';
     };
     this.requestPermission = function() {
-      if (availableNotPermission(Notification)) {
+      var $deferred;
+      $deferred = $.Deferred();
+      if (!available) {
+        return $deferred.reject().promise();
+      }
+      if (permissionNotGranted(Notification)) {
         Notification.requestPermission(function(status) {
           if (Notification.permission !== status) {
             Notification.permission = status;
           }
+          if (permissionNotGranted(Notification)) {
+            $deferred.reject();
+          } else {
+            $deferred.resolve();
+          }
         });
+      } else {
+        $deferred.resolve();
       }
+      return $deferred.promise();
     };
     this.onLoadHandler = (function(_this) {
       return function() {
-        _this.requestPermission();
-        $('body').one('click', _this.requestPermission);
+        var $deferred;
+        $deferred = $.Deferred();
+        _this.requestPermission().done(function() {
+          return $deferred.resolve();
+        });
+        $('body').one('click', function() {
+          return _this.requestPermission().done(function() {
+            return $deferred.resolve();
+          });
+        });
         icon = $('link[rel=icon]').attr('href');
-      };
-    })(this);
-    this.scheduleOnLoadEvent = (function(_this) {
-      return function() {
-        if (_this.scheduleRequestingPermissionOnLoad()) {
-          $(window).on('load', _this.onLoadHandler);
-        }
+        return $deferred.promise();
       };
     })(this);
     this.showNotification = function(title, _arg) {
@@ -142,17 +152,21 @@
       }).done(function(op) {
         op.close();
         available[server] = true;
-        return $deferred.resolve();
+        $deferred.resolve();
       }).fail(function() {
-        return $deferred.reject();
+        $deferred.reject();
       });
       return $deferred.promise();
     };
     this.onLoadHandler = (function(_this) {
       return function() {
-        var _ref;
+        var $deferred, _ref;
+        $deferred = $.Deferred();
         _this.defaultServer(serverPath(proto, host, contextPath || ((_ref = $('base').attr('href')) != null ? _ref.replace(new RegExp("" + location.origin + "(.+)/$"), '$1') : void 0), servletPath));
-        return _this.available(defaultServer);
+        _this.available(defaultServer).done(function() {
+          $deferred.resolve();
+        });
+        return $deferred.promise();
       };
     })(this);
     this.defaultServer = function(server) {
