@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import com.caucho.websocket.WebSocketContext;
@@ -17,7 +16,6 @@ import jp.co.gsol.oss.notifications.impl.contrib.IntervalDeferringTask;
 import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
 import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
 import jp.co.intra_mart.foundation.asynchronous.TaskManager;
-import jp.co.intra_mart.foundation.asynchronous.report.RegisteredParallelizedTaskInfo;
 
 public abstract class AbstractWebSocketTask extends AbstractTask {
     protected static final int deferringInterval = 10_000;
@@ -74,9 +72,9 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
         if ((context = WebSocketContextPool.context(key)).isPresent()) {
                 nextParam.put("lastParam", done(key, sendMessage(processed, context.get())));
             try {
-                final Set<RegisteredParallelizedTaskInfo> running = TaskManager.getRegisteredInfo().getParallelizedTaskQueueInfo().getRunningTasksInfo();
-                for (RegisteredParallelizedTaskInfo info : running)
-                    System.out.println("k" + key + "runnning:" + info.getMessageId() + "@" + info.getNode());
+//                final Set<RegisteredParallelizedTaskInfo> running = TaskManager.getRegisteredInfo().getParallelizedTaskQueueInfo().getRunningTasksInfo();
+//                for (RegisteredParallelizedTaskInfo info : running)
+//                    System.out.println("k" + key + "runnning:" + info.getMessageId() + "@" + info.getNode());
 
                 final Optional<String> deferringTask = deferringTask();
                 if (deferringTask.isPresent()) {

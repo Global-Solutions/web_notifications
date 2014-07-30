@@ -46,7 +46,7 @@ public class IntervalDeferringTask extends AbstractDeferringTask {
                     Logger.getLogger().debug("intrrupted", e);
                     return Optional.absent();
                 }
-                return Optional.of(deferredCount >= repeat); //emit continue signal
+                return Optional.of(deferredCount + 1 >= repeat); //emit continue signal
             }
         });
     }

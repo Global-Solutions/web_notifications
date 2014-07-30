@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 
 import com.google.common.base.Optional;
 
+import jp.co.intra_mart.common.platform.log.Logger;
 import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
 import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
 import jp.co.intra_mart.foundation.asynchronous.TaskManager;
@@ -36,7 +37,7 @@ public abstract class AbstractDeferringTask extends AbstractTask {
                     nextParam.put("deferredCount", String.valueOf(count + 1));
                     advanceClass = this.getClass().getCanonicalName();
                 }
-                System.out.println(key + ":" + count);
+                Logger.getLogger().debug("key: {}, count: {}, param: {}", key, count, signalParam);
                 TaskManager.addParallelizedTask(advanceClass, nextParam);
             }
         } catch (InterruptedException | ExecutionException e) {

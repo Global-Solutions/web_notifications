@@ -1,5 +1,5 @@
 (function() {
-  var $;
+  var $, webSocketConnector;
 
   $ = this.jQuery;
 
@@ -104,84 +104,12 @@
     return this;
   }).call({});
 
-  this.webSockets = (function() {
-    var available, contextPath, defaultServer, echoProtocol, host, proto, serverPath, servletPath;
+  webSocketConnector = function() {
+    var available, connect;
     available = typeof WebSocket !== "undefined" && WebSocket !== null;
-    serverPath = function(proto, host, contextPath, servletPath) {
-      if (contextPath == null) {
-        contextPath = '';
-      }
-      if (servletPath == null) {
-        servletPath = '';
-      }
-      return "" + proto + "//" + host + contextPath + servletPath;
-    };
-    proto = {
-      'http:': 'ws:',
-      'https:': 'wss:'
-    }[location.protocol];
-    host = location.host;
-    contextPath = '';
-    servletPath = '/notifications/websocket';
-    defaultServer = serverPath(proto, host, contextPath, servletPath);
-    echoProtocol = 'websocket-echo-protocol';
-    this.contextPath = function(path) {
-      if (path == null) {
-        path = contextPath;
-      }
-      return contextPath = path;
-    };
-    this.servletPath = function(path) {
-      if (path == null) {
-        path = servletPath;
-      }
-      return servletPath = path;
-    };
-    this.available = function(server) {
-      var $deferred;
+    connect = function(server, protocol, messageHandler, events, reconnect, keepalive) {
+      var $deferred, $ws, attachEvents, attachMessageEvent, callOrVal, clearConnectionKeeper, op, reconnector, retryCount, timeoutId, ws;
       $deferred = $.Deferred();
-      if (!available) {
-        return $deferred.reject().promise();
-      }
-      if (available[server]) {
-        return $deferred.resolve().promise();
-      }
-      this.connect({
-        server: server,
-        protocol: echoProtocol
-      }).done(function(op) {
-        op.close();
-        available[server] = true;
-        $deferred.resolve();
-      }).fail(function() {
-        $deferred.reject();
-      });
-      return $deferred.promise();
-    };
-    this.onLoadHandler = (function(_this) {
-      return function() {
-        var $deferred, _ref;
-        $deferred = $.Deferred();
-        _this.defaultServer(serverPath(proto, host, contextPath || ((_ref = $('base').attr('href')) != null ? _ref.replace(new RegExp("" + location.origin + "(.+)/$"), '$1') : void 0), servletPath));
-        _this.available(defaultServer).done(function() {
-          $deferred.resolve();
-        });
-        return $deferred.promise();
-      };
-    })(this);
-    this.defaultServer = function(server) {
-      if (server == null) {
-        server = defaultServer;
-      }
-      return defaultServer = server;
-    };
-    this.connect = function(_arg) {
-      var $deferred, $ws, attachEvents, attachMessageEvent, callOrVal, clearConnectionKeeper, events, keepalive, messageHandler, op, protocol, reconnect, reconnector, retryCount, server, timeoutId, ws;
-      server = _arg.server, protocol = _arg.protocol, messageHandler = _arg.messageHandler, events = _arg.events, reconnect = _arg.reconnect, keepalive = _arg.keepalive;
-      $deferred = $.Deferred();
-      if (server == null) {
-        server = defaultServer;
-      }
       ws = new WebSocket(server, protocol);
       timeoutId = {};
       clearConnectionKeeper = function() {
@@ -196,18 +124,18 @@
           if (timeoutId.keepalive != null) {
             clearTimeout(timeoutId.keepalive);
           }
-          return keepalive = false;
+          keepalive = false;
         }
       };
       op = {
-        'send': function(message) {
+        send: function(message) {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(message);
             return true;
           }
           return false;
         },
-        'close': function() {
+        close: function() {
           clearConnectionKeeper();
           ws.close();
         }
@@ -238,14 +166,16 @@
       };
       retryCount = 0;
       (reconnector = function($s) {
+        var deceleration, interval, timeout;
         if (reconnect) {
-          $s.on('close.reconnect', (function() {
-            var timeout;
-            timeout = callOrVal(reconnect.interval, (function(v) {
-              return v;
-            }), retryCount, 0) + callOrVal(reconnect.deceleration, (function(v, c) {
-              return v * c;
-            }), retryCount, 1000) + Math.random() * 5000;
+          interval = callOrVal(reconnect.interval, (function(v) {
+            return v;
+          }), retryCount, 0);
+          deceleration = callOrVal(reconnect.deceleration, (function(v, c) {
+            return v * c;
+          }), retryCount, 1000);
+          timeout = interval + deceleration + Math.random() * 5000;
+          $s.on('close.reconnect', function() {
             timeoutId.reconnect = setTimeout(function() {
               var $rews;
               ws = new WebSocket(server, protocol);
@@ -253,12 +183,11 @@
                 retryCount = 0;
                 return typeof reconnect.done === "function" ? reconnect.done(op, e) : void 0;
               });
-              attachMessageEvent($rews);
               reconnector($rews);
-              attachEvents($rews, reconnect.events);
+              attachEvents($rews);
             }, Math.max(0, timeout));
             ++retryCount;
-          }));
+          });
         }
       })($ws);
       (attachEvents = function($s, es) {
@@ -274,22 +203,120 @@
         var pingCount, pingSender;
         pingCount = 0;
         (pingSender = function() {
+          var interval, message, _ref, _ref1;
           if (keepalive) {
+            interval = callOrVal(keepalive.interval, (function(v) {
+              return v;
+            }), pingCount, 60000);
+            message = (_ref = typeof keepalive.message === "function" ? keepalive.message(pingCount) : void 0) != null ? _ref : (_ref1 = keepalive.message) != null ? _ref1 : '';
             timeoutId.keepalive = setTimeout(function() {
-              var _ref, _ref1;
-              op.send((_ref = typeof keepalive.message === "function" ? keepalive.message(pingCount) : void 0) != null ? _ref : (_ref1 = keepalive.message) != null ? _ref1 : '');
+              op.send(message);
               ++pingCount;
               pingSender();
-            }, callOrVal(keepalive.interval, (function(v) {
-              return v;
-            }), pingCount, 60000));
+            }, interval);
           }
         })();
       })();
       return $deferred.promise();
     };
+    return {
+      available: function(server, protocol) {
+        var $deferred;
+        $deferred = $.Deferred();
+        if (!available) {
+          return $deferred.reject().promise();
+        }
+        if (available[server]) {
+          return $deferred.resolve().promise();
+        }
+        connect(server, protocol).done(function(op) {
+          op.close();
+          available[server] = true;
+          $deferred.resolve();
+        }).fail(function() {
+          $deferred.reject();
+        });
+        return $deferred.promise();
+      },
+      register: function(server, protocol, messageHandler, events, reconnect, keepalive) {
+        return connect(server, protocol, messageHandler, events, reconnect, keepalive);
+      }
+    };
+  };
+
+  this.webSockets = (function(con) {
+    var contextPath, defaultServer, echoProtocol, host, proto, serverPath, servletPath;
+    serverPath = function(proto, host, contextPath, servletPath) {
+      if (contextPath == null) {
+        contextPath = '';
+      }
+      if (servletPath == null) {
+        servletPath = '';
+      }
+      return "" + proto + "//" + host + contextPath + servletPath;
+    };
+    proto = {
+      'http:': 'ws:',
+      'https:': 'wss:'
+    }[location.protocol];
+    host = location.host;
+    contextPath = '';
+    servletPath = '/notifications/websocket';
+    defaultServer = serverPath(proto, host, contextPath, servletPath);
+    echoProtocol = 'websocket-echo-protocol';
+    if (location.origin == null) {
+      location.origin = "" + location.protocol + "//" + location.host;
+    }
+    this.contextPath = function(path) {
+      if (path == null) {
+        path = contextPath;
+      }
+      return contextPath = path;
+    };
+    this.servletPath = function(path) {
+      if (path == null) {
+        path = servletPath;
+      }
+      return servletPath = path;
+    };
+    this.available = function(server) {
+      return con.available(server, echoProtocol);
+    };
+    this.onLoadHandler = (function(_this) {
+      return function() {
+        var $deferred, _ref;
+        $deferred = $.Deferred();
+        _this.defaultServer(serverPath(proto, host, contextPath || ((_ref = $('base').attr('href')) != null ? _ref.replace(new RegExp("" + location.origin + "(.+)/$"), '$1') : void 0), servletPath));
+        _this.available(defaultServer).done(function() {
+          $deferred.resolve();
+        });
+        return $deferred.promise();
+      };
+    })(this);
+    this.defaultServer = function(server) {
+      if (server == null) {
+        server = defaultServer;
+      }
+      return defaultServer = server;
+    };
+    this.connect = function(_arg) {
+      var $deferred, events, keepalive, messageHandler, protocol, reconnect, server;
+      server = _arg.server, protocol = _arg.protocol, messageHandler = _arg.messageHandler, events = _arg.events, reconnect = _arg.reconnect, keepalive = _arg.keepalive;
+      $deferred = $.Deferred();
+      if (server == null) {
+        server = defaultServer;
+      }
+      con.register(server, protocol, messageHandler, events, reconnect, keepalive).done(function(o) {
+        $deferred.resolve(o);
+      }).fail(function(o) {
+        $deferred.reject();
+      });
+      return $deferred.promise();
+    };
     return this;
-  }).call({});
+  }).call(this, webSocketConnector());
+
+  this.sharedWebSockets = (function() {}).call({});
 
 }).call(this);
 

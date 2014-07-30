@@ -36,7 +36,6 @@ public class ResinWebSocketServlet extends GenericServlet {
         final String protocol = req.getHeader("Sec-WebSocket-Protocol");
         final Optional<WebSocketTaker> taker = WebSocketTakerManager.getProtocolsTaker(protocol);
         if (taker.isPresent()) {
-            //final AccountContext ac = Contexts.get(AccountContext.class);
             final WebSocketTaker wst = taker.get();
             final ResinWebSocketListener listener = new ResinWebSocketListener(wst);
             res.setHeader("Sec-WebSocket-Protocol", protocol);

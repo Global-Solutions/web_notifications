@@ -20,7 +20,6 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
     private final WebSocketTaker taker;
     public final String key = String.valueOf(this.hashCode());
     public ResinWebSocketListener(final WebSocketTaker webSocketTaker) {
-        // TODO 自動生成されたコンストラクター・スタブ
         taker = webSocketTaker;
         WebSocketContextPool.reserve(key);
     }
@@ -39,14 +38,17 @@ public class ResinWebSocketListener extends AbstractWebSocketListener {
     public final void onReadText(final WebSocketContext context, final Reader is)
        {
         if (WebSocketContextPool.notRegistered(key)
-         || WebSocketContextPool.zombieSession(key, taker.maxRequestCount()))
+         || WebSocketContextPool.zombieSession(key, taker.maxRequestCount())) {
             context.close();
+            logger.debug("session not found: {}, thus the connection closed", context.toString());
+            return;
+        }
         try (final Reader reader = is; final BufferedReader br = new BufferedReader(reader)) {
             final StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
+            String line = null;
+            while ((line = br.readLine()) != null)
                 sb.append(line);
-            }
+
             final String message = sb.toString();
             taker.onReadText(context, key, message);
             logger.debug("readText: {}", context.toString());
