@@ -13,6 +13,10 @@ import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
 import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
 import jp.co.intra_mart.foundation.asynchronous.TaskManager;
 
+/**
+ * waiting task implements.
+ * @author Global Solutions company limited
+ */
 public abstract class AbstractDeferringTask extends AbstractTask {
     @Override
     public final void run() {
@@ -28,7 +32,7 @@ public abstract class AbstractDeferringTask extends AbstractTask {
         try {
             final Optional<Boolean> advance =
                     signal(key, signalParam,
-                            count, ForkJoinCommonPool.commonPool).get();
+                            count, ForkJoinCommonPool.COMMON_POOL).get();
             if (advance.isPresent()) {
                 String advanceClass = deferredClass;
                 if (advance.get()) {
@@ -40,15 +44,22 @@ public abstract class AbstractDeferringTask extends AbstractTask {
                 Logger.getLogger().debug("key: {}, count: {}, param: {}", key, count, signalParam);
                 TaskManager.addParallelizedTask(advanceClass, nextParam);
             }
-        } catch (InterruptedException | ExecutionException e) {
-            // TODO 自動生成された catch ブロック
-            e.printStackTrace();
-        } catch (TaskControlException e) {
-            // TODO 自動生成された catch ブロック
-            e.printStackTrace();
+        } catch (InterruptedException | ExecutionException | TaskControlException e) {
+            Logger.getLogger().error("event loop abort", e);
         }
     }
-    abstract protected Future<Optional<Boolean>> signal(
+    /**
+     * wait for firing event.
+     * @param key identification for the session
+     * @param param waiting configuration
+     * @param deferredCount the times this task continued
+     * @param fjp executor service
+     * @return
+     *      advance for the event process task -> true
+     *      continue this waiting task -> false
+     *      stop the event loop -> absent
+     */
+    protected abstract Future<Optional<Boolean>> signal(
             final String key, final Map<String, String> param,
             final int deferredCount,
             final ForkJoinPool fjp);

@@ -8,8 +8,14 @@ import jp.co.gsol.oss.notifications.WebSocketTaker;
 import com.caucho.websocket.WebSocketContext;
 import com.google.common.base.Optional;
 
+/**
+ * default do-noting implements.
+ * @author Global solutions company limited
+ */
 public abstract class AbstractTakerImpl implements WebSocketTaker {
 
+    /** default value.*/
+    private static final int DEFAULT_MAX_REQUEST_COUNT = 10;
     @Override
     public void register(final WebSocketContext context, final String key) {
     }
@@ -26,7 +32,7 @@ public abstract class AbstractTakerImpl implements WebSocketTaker {
     public void onTimeout(final WebSocketContext context, final String key) {
     }
     @Override
-    public void onReadBinary(final WebSocketContext context, final String key, final InputStream is) {
+    public void onReadBinary(final WebSocketContext context, final String key, final InputStream is) throws IOException {
     }
     @Override
     public void onReadText(final WebSocketContext context, final String key, final String message) throws IOException {
@@ -40,6 +46,6 @@ public abstract class AbstractTakerImpl implements WebSocketTaker {
     }
     @Override
     public int maxRequestCount() {
-        return 10;
+        return DEFAULT_MAX_REQUEST_COUNT;
     }
 }

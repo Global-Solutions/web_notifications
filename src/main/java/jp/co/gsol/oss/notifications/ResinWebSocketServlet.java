@@ -20,13 +20,19 @@ import jp.co.intra_mart.system.log.transition.TransitionLogHttpServletRequestWra
 
 
 /**
- * 
- *
+ * WebSocketServlet for resin.
+ * @author Global solutions company limited
  */
 public class ResinWebSocketServlet extends GenericServlet {
     /** . */
     private static final long serialVersionUID = 3369924150095133613L;
 
+    /**
+     * Receives request & dispatches #{@link WebSocketTaker} to #{@link ResinWebSocketListener}.
+     * @param request #{@link ServletRequest}
+     * @param response #{@link ServletResponse}
+     * @throws IOException #{@link WebSocketServletRequest#startWebSocket(com.caucho.websocket.WebSocketListener)}
+     */
     @Override
     public void service(final ServletRequest request, final ServletResponse response)
     throws IOException {
@@ -43,13 +49,13 @@ public class ResinWebSocketServlet extends GenericServlet {
                     ((TransitionLogHttpServletRequestWrapper) request).getRequest();
             wsRequest.startWebSocket(listener);
             if (wst.processClass().isPresent()) {
+            // start push event loop
                 try {
                     final Map<String, Object> param = new HashMap<>();
                     param.put("key", listener.key);
                     TaskManager.addParallelizedTask(wst.processClass().get(), param);
-                } catch (TaskControlException e) {
-                    // TODO 自動生成された catch ブロック
-                    e.printStackTrace();
+                } catch (final TaskControlException e) {
+                    Logger.getLogger().error("event loop abort", e);
                 }
             }
         } else {

@@ -18,40 +18,60 @@ import jp.co.intra_mart.foundation.config.ConfigurationLoader;
 
 import com.google.common.base.Optional;
 
-public class WebSocketTakerManager {
+/**
+ * Manager for WebSocket event handlers.
+ * @author Global Solutions company limited
+ */
+public final class WebSocketTakerManager {
 
-    static List<String> registeredProtocol(Collection<GsolWebsocketTaker> takers) {
-        List<String> protos = new ArrayList<>();
+    /** .*/
+    private WebSocketTakerManager() { }
+
+    /**
+     * map for #{@link GsolWebsocketTaker} collection -> it's protocol name list.
+     * @param takers WebSocket event handler's configuration collection
+     * @return protocol name list
+     */
+    private static List<String> registeredProtocol(final Collection<GsolWebsocketTaker> takers) {
+        final List<String> protos = new ArrayList<>();
         for (GsolWebsocketTaker taker : takers)
            protos.add(taker.getProtocol());
         return protos;
     }
-    static public List<String> registerdProtocols() {
+    /**
+     * registered protocol's list on the web app.
+     * @return protocol list
+     */
+    public static List<String> registerdProtocols() {
         try {
             return registeredProtocol(ConfigurationLoader.loadAll(GsolWebsocketTaker.class));
-        } catch (ConfigurationException e) {
-            // TODO
-            Logger.getLogger().error("", e);
+        } catch (final ConfigurationException e) {
+            Logger.getLogger().error("some configurations are wrong", e);
         }
         return new ArrayList<>();
     }
-    static public Optional<WebSocketTaker> getProtocolsTaker(final String protocol) {
+    /**
+     * fetch protocol's WebSocket event handler.
+     * @param protocol protocol name
+     * @return WebSocket event handler
+     */
+    public static Optional<WebSocketTaker> getProtocolsTaker(final String protocol) {
         try {
             for (GsolWebsocketTaker conf : ConfigurationLoader.loadAll(GsolWebsocketTaker.class)) {
                 if (conf.getProtocol().equals(protocol)) {
                     final S2Container cont = S2ContainerFactory.create(conf.getTaker().getDiconPath());
                     final Object taker = cont.getComponent(conf.getTaker().getComponentName());
                     if (taker instanceof WebSocketTaker)
-                        return Optional.<WebSocketTaker>of((WebSocketTaker) taker);
+                        return Optional.of((WebSocketTaker) taker);
                 }
             }
-        } catch (ComponentNotFoundRuntimeException
+        } catch (
+            final ComponentNotFoundRuntimeException
                 | TooManyRegistrationRuntimeException
                 | CyclicReferenceRuntimeException
                 | ConfigurationException
                 | ClassNotFoundRuntimeException e) {
-            // TODO
-            Logger.getLogger().error("some configuration is wrong", e);
+            Logger.getLogger().error("some configurations are wrong", e);
         }
 
         return Optional.absent();

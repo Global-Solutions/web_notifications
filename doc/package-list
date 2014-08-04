@@ -1,0 +1,4 @@
+jp.co.gsol.oss.notifications
+jp.co.gsol.oss.notifications.config.websocketTaker
+jp.co.gsol.oss.notifications.impl
+jp.co.gsol.oss.notifications.impl.contrib
