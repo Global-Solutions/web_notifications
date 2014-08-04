@@ -7,6 +7,10 @@ import jp.co.intra_mart.common.platform.log.Logger;
 import com.caucho.websocket.WebSocketContext;
 import com.google.common.base.Optional;
 
+/**
+ * broadcast protocol's WebSocket event handler.
+ * @author Global solutions company limited
+ */
 public class BroadcastTakerImpl extends AbstractTakerImpl {
 
     @Override

@@ -8,6 +8,10 @@ import jp.co.intra_mart.common.platform.log.Logger;
 
 import com.caucho.websocket.WebSocketContext;
 
+/**
+ * echo protocol implements.
+ * @author Global solutions company limited
+ */
 public class EchoTakerImpl extends AbstractTakerImpl {
     @Override
     public void onReadText(final WebSocketContext context,

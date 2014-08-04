@@ -16,9 +16,15 @@ import jp.co.intra_mart.foundation.context.model.AccountContext;
 
 import com.google.common.base.Optional;
 
+/**
+ * broadcast protocol's push event handler.
+ * @author Global solutions company limited
+ */
 public class BroadcastTask extends AbstractWebSocketTask {
 
+    /** this time.*/
     private long processTime = 0;
+    /** previous process time.*/
     private long lastProcessTime = 0;
     @Override
     protected List<String> processedMessage(final String key,
