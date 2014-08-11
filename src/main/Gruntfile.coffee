@@ -32,12 +32,17 @@ module.exports = (grunt) ->
                     sourceMapIncludeSources: true
                     sourceMapIn: mapName
                     sourceMap: true
-
+        docco:
+            debug:
+                src: ['public/notifications/coffee/*.coffee']
+                options:
+                    output: '../../docs'
 
     grunt.loadNpmTasks 'grunt-contrib-coffee'
     grunt.loadNpmTasks 'grunt-contrib-watch'
     grunt.loadNpmTasks 'grunt-contrib-uglify'
+    grunt.loadNpmTasks 'grunt-docco'
     grunt.registerTask 'default', ['watch']
-    grunt.registerTask 'compile', ['coffee', 'uglify']
+    grunt.registerTask 'compile', ['coffee', 'uglify', 'docco']
     return
 

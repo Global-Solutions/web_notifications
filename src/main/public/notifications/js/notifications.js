@@ -8,14 +8,16 @@
     available = typeof Notification !== "undefined" && Notification !== null;
     icon = '';
     this.$ = function(_$) {
-      if (_$ != null) {
-        return $ = _$;
+      if (_$ == null) {
+        _$ = $;
       }
+      return $ = _$;
     };
     this.defaultIcon = function(_icon) {
-      if (_icon != null) {
-        return icon = _icon;
+      if (_icon == null) {
+        _icon = icon;
       }
+      return icon = _icon;
     };
     permissionNotGranted = function(_Notification) {
       return _Notification.permission !== 'granted';
@@ -172,7 +174,7 @@
             return v;
           }), retryCount, 0);
           deceleration = callOrVal(reconnect.deceleration, (function(v, c) {
-            return v * c;
+            return Math.min(v * c, 600000);
           }), retryCount, 1000);
           timeout = interval + deceleration + Math.random() * 5000;
           $s.on('close.reconnect', function() {
