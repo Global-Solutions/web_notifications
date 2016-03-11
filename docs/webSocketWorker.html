@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>webSocketWorker.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="notifications.html">
+                notifications.coffee
+              </a>
+            
+              
+              <a class="source" href="webSocketWorker.html">
+                webSocketWorker.coffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>webSocketWorker.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>in production</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>ports = []
+resolvers = {}
+
+availables = {} <span class="hljs-keyword">if</span> WebSocket?
+connections = {}
+
+<span class="hljs-function"><span class="hljs-title">connect</span> = <span class="hljs-params">(server, protocol, messageHandler, events, reconnect, keepalive)</span> -&gt;</span>
+    <span class="hljs-keyword">new</span> Promise <span class="hljs-function"><span class="hljs-params">(resolve, reject)</span> -&gt;</span> 
+        ws = <span class="hljs-keyword">new</span> WebSocket server, protocol
+
+        timeoutId = {}
+        reconnectHandler = <span class="hljs-literal">undefined</span>
+        <span class="hljs-function"><span class="hljs-title">clearConnectionKeeper</span> = -&gt;</span>
+            <span class="hljs-keyword">if</span> reconnect
+                clearTimeout timeoutId.reconnect <span class="hljs-keyword">if</span> timeoutId.reconnect?
+                ws.removeEventListener <span class="hljs-string">'close'</span>, reconnectHandler <span class="hljs-keyword">if</span> reconnectHandler
+                reconnect = <span class="hljs-literal">false</span>
+            <span class="hljs-keyword">if</span> keepalive
+                clearTimeout timeoutId.keepalive <span class="hljs-keyword">if</span> timeoutId.keepalive?
+                keepalive = <span class="hljs-literal">false</span>
+            <span class="hljs-keyword">return</span>
+
+        op =
+            <span class="hljs-attribute">send</span>: <span class="hljs-function"><span class="hljs-params">(message)</span> -&gt;</span>
+                <span class="hljs-keyword">if</span> ws.readyState <span class="hljs-keyword">is</span> WebSocket.OPEN
+                    ws.send message
+                    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+                <span class="hljs-literal">false</span>
+            <span class="hljs-attribute">close</span>:<span class="hljs-function"> -&gt;</span>
+                clearConnectionKeeper()
+                ws.close()
+                <span class="hljs-keyword">return</span>
+        promiseState = <span class="hljs-string">'pending'</span>
+        ws.addEventListener <span class="hljs-string">'open'</span>, <span class="hljs-function"><span class="hljs-params">(e)</span> -&gt;</span>
+            resolve op, e
+            promiseState = <span class="hljs-string">'resolved'</span>
+            <span class="hljs-keyword">return</span>
+        ws.addEventListener <span class="hljs-string">'error'</span>, <span class="hljs-function"><span class="hljs-params">(e)</span> -&gt;</span>
+            <span class="hljs-keyword">if</span> promiseState <span class="hljs-keyword">is</span> <span class="hljs-string">'pending'</span>
+                clearConnectionKeeper()
+                reject e
+                promiseState = <span class="hljs-string">'rejected'</span>
+            <span class="hljs-keyword">return</span>
+
+        <span class="hljs-function"><span class="hljs-params">(attachMessageEvent = (sock) -&gt;
+            sock.addEventListener <span class="hljs-string">'message'</span>, ((e) -&gt;
+                messageHandler? e.data
+                <span class="hljs-keyword">return</span>
+            ) <span class="hljs-keyword">if</span> messageHandler
+            <span class="hljs-keyword">return</span>
+        )</span> <span class="hljs-title">ws</span>
+        <span class="hljs-title">callOrVal</span> = <span class="hljs-params">(fnOrVal, toVal, count, defaultValue)</span> -&gt;</span> +(fnOrVal?(count) ? toVal(fnOrVal ? defaultValue, count))
+        retryCount = <span class="hljs-number">0</span>
+        <span class="hljs-function"><span class="hljs-params">(reconnector = (sock) -&gt;
+            <span class="hljs-keyword">if</span> reconnect
+                interval = callOrVal reconnect.interval, ((v) -&gt; v), retryCount, <span class="hljs-number">0</span>
+                deceleration = callOrVal reconnect.deceleration, ((v, c) -&gt; v * c), retryCount, <span class="hljs-number">1000</span>
+                timeout = interval + deceleration + Math.random() * <span class="hljs-number">5000</span>
+                sock.addEventListener <span class="hljs-string">'close'</span>, (reconnectHandler = -&gt;
+                    timeoutId.reconnect = setTimeout -&gt;
+                        ws = <span class="hljs-keyword">new</span> WebSocket server, protocol
+                        ws.addEventListener <span class="hljs-string">'open'</span>, (e) -&gt;
+                            retryCount = <span class="hljs-number">0</span>
+                            reconnect.done? op, e
+                            <span class="hljs-keyword">return</span>
+                        reconnector ws
+                        attachEvents ws
+                        <span class="hljs-keyword">return</span>
+                    , (Math.max <span class="hljs-number">0</span>, timeout)
+                    ++retryCount
+                    <span class="hljs-keyword">return</span>
+                )
+                <span class="hljs-keyword">return</span>
+        )</span> <span class="hljs-title">ws</span>
+        <span class="hljs-params">(attachEvents = (sock, es) -&gt;
+            sock.addEventListener k, v <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">of</span> es <span class="hljs-keyword">if</span> es
+            <span class="hljs-keyword">return</span>
+        )</span> <span class="hljs-title">ws</span>, <span class="hljs-title">events</span> 
+        <span class="hljs-params">(-&gt;
+            pingCount = <span class="hljs-number">0</span>
+            (pingSender = -&gt;
+                <span class="hljs-keyword">if</span> keepalive
+                    interval = callOrVal keepalive.interval, ((v) -&gt; v), pingCount, <span class="hljs-number">60000</span>
+                    message = keepalive.message?(pingCount) ? (keepalive.message ? <span class="hljs-string">''</span>)
+                    timeoutId.keepalive = setTimeout -&gt;
+                        op.send message
+                        ++pingCount
+                        pingSender()
+                        <span class="hljs-keyword">return</span>
+                    , interval
+                <span class="hljs-keyword">return</span>
+            )()
+            <span class="hljs-keyword">return</span>
+        )()</span>
+        <span class="hljs-title">return</span>
+
+<span class="hljs-title">receivableCommands</span> =
+    <span class="hljs-title">pong</span>: <span class="hljs-params">(a)</span> -&gt;</span>
+        resolvers[a]?()
+        <span class="hljs-keyword">delete</span> resolvers[a]
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-attribute">available</span>: <span class="hljs-function"><span class="hljs-params">(a)</span> -&gt;</span>
+        <span class="hljs-keyword">new</span> Promise <span class="hljs-function"><span class="hljs-params">(resolve, reject)</span> -&gt;</span>
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> availables?
+                reject()
+                <span class="hljs-keyword">return</span>
+            server = a.server
+            protocol = a.protocol
+            key = <span class="hljs-string">"<span class="hljs-subst">#{server}</span>-<span class="hljs-subst">#{protocol}</span>"</span>
+            <span class="hljs-keyword">if</span> availables[key]
+                resolve()
+                <span class="hljs-keyword">return</span>
+
+            connect(server, protocol).<span class="hljs-keyword">then</span>(
+                <span class="hljs-function"><span class="hljs-params">(op)</span> -&gt;</span>
+                    op.close()
+                    availables[key] = <span class="hljs-literal">true</span>
+                    resolve()
+                    <span class="hljs-keyword">return</span>
+                ,<span class="hljs-function"> -&gt;</span>
+                    reject()
+                    <span class="hljs-keyword">return</span>
+            )
+            <span class="hljs-keyword">return</span>
+    <span class="hljs-attribute">register</span>: <span class="hljs-function"><span class="hljs-params">(a, p)</span> -&gt;</span>
+        <span class="hljs-keyword">new</span> Promise <span class="hljs-function"><span class="hljs-params">(resolve, reject)</span> -&gt;</span>
+            server = a.server
+            protocol = a.protocol
+            
+            key = <span class="hljs-string">"<span class="hljs-subst">#{server}</span>-<span class="hljs-subst">#{protocol}</span>"</span>
+            connections[key] ?= <span class="hljs-attribute">con</span>: <span class="hljs-literal">undefined</span>, <span class="hljs-attribute">ports</span>: []
+            <span class="hljs-keyword">if</span> connections[key].ports.indexOf(p) &gt; -<span class="hljs-number">1</span>
+                resolve <span class="hljs-string">'registered'</span>
+                <span class="hljs-keyword">return</span>
+            connections[key].ports.push p
+
+            resolve <span class="hljs-string">'tobe'</span>
+            <span class="hljs-keyword">return</span>
+
+    <span class="hljs-attribute">send</span>: <span class="hljs-function"><span class="hljs-params">(a)</span> -&gt;</span>
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-attribute">close</span>: <span class="hljs-function"><span class="hljs-params">(a)</span> -&gt;</span>
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-attribute">keepalive</span>: <span class="hljs-function"><span class="hljs-params">(a)</span> -&gt;</span>
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-attribute">reconnect</span>: <span class="hljs-function"><span class="hljs-params">(a)</span> -&gt;</span>
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-attribute">message</span>: <span class="hljs-function"><span class="hljs-params">(a)</span> -&gt;</span>
+        ps = fetchAlivePorts()
+        sendTo1stResolved ps, a
+        maintainAlivePort ps
+        <span class="hljs-keyword">return</span>
+
+<span class="hljs-function"><span class="hljs-title">sendTo1stResolved</span> = <span class="hljs-params">(ports, data)</span> -&gt;</span>
+    Promise.race<span class="hljs-function"><span class="hljs-params">(ports)</span>.<span class="hljs-title">then</span> <span class="hljs-params">(v)</span> -&gt;</span>
+        v.postMessage data
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-keyword">return</span>
+<span class="hljs-function"><span class="hljs-title">maintainAlivePort</span> = <span class="hljs-params">(ports)</span> -&gt;</span>
+    Promise.all<span class="hljs-function"><span class="hljs-params">(ports.map (v) -&gt; <span class="hljs-keyword">new</span> Promise (resolve, reject) -&gt;
+        v.<span class="hljs-keyword">then</span> (d) -&gt; 
+            resolve d
+            <span class="hljs-keyword">return</span>
+        ,(d) -&gt;
+            d.close()
+            resolve <span class="hljs-literal">false</span>
+            <span class="hljs-keyword">return</span>
+        <span class="hljs-keyword">return</span>
+    )</span>.<span class="hljs-title">then</span> <span class="hljs-params">(vs)</span> -&gt;</span>
+        ports = vs.filter <span class="hljs-function"><span class="hljs-params">(v)</span> -&gt;</span> v
+        <span class="hljs-keyword">return</span>
+    <span class="hljs-keyword">return</span>
+
+<span class="hljs-function"><span class="hljs-title">fetchAlivePorts</span> = -&gt;</span> 
+   ports.map <span class="hljs-function"><span class="hljs-params">(v, i)</span> -&gt;</span> <span class="hljs-keyword">new</span> Promise <span class="hljs-function"><span class="hljs-params">(resolve, reject)</span> -&gt;</span>
+        key = <span class="hljs-string">"<span class="hljs-subst">#{Math.random()}</span>:<span class="hljs-subst">#{i}</span>"</span>
+        v.postMessage <span class="hljs-attribute">ping</span>: key
+        resolvers[key] = resolve.bind @, v
+        setTimeout<span class="hljs-function"> -&gt;</span>
+            reject v
+            <span class="hljs-keyword">delete</span> resolvers[key]
+            <span class="hljs-keyword">return</span>
+        , <span class="hljs-number">5000</span>
+        <span class="hljs-keyword">return</span>
+
+<span class="hljs-function"><span class="hljs-title">responseData</span> = <span class="hljs-params">(key, result, args, data)</span> -&gt;</span>
+    o = {}
+    o[key] =
+        <span class="hljs-attribute">result</span>: result
+        <span class="hljs-attribute">args</span>: args
+        <span class="hljs-attribute">data</span>: data
+
+<span class="hljs-property">@onconnect</span> = <span class="hljs-function"><span class="hljs-params">(e)</span> -&gt;</span>
+    port = e.ports[<span class="hljs-number">0</span>]
+    ports.push port
+    port.postMessage <span class="hljs-string">'yo:'</span> + ports.length
+    <span class="hljs-built_in">console</span>.log <span class="hljs-string">'yo'</span>
+    port.<span class="hljs-function"><span class="hljs-title">onmessage</span> = <span class="hljs-params">(ev)</span> -&gt;</span>
+        <span class="hljs-built_in">console</span>.log ev
+        <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">of</span> ev.data
+            receivableCommands[k]?(v, port)?.<span class="hljs-keyword">then</span>(
+                <span class="hljs-function"><span class="hljs-params">(r)</span> -&gt;</span>
+                    port.postMessage responseData k, <span class="hljs-literal">true</span>, v, r
+                    <span class="hljs-keyword">return</span>
+                , <span class="hljs-function"><span class="hljs-params">(r)</span> -&gt;</span>
+                    port.postMessage responseData k, <span class="hljs-literal">false</span>, v, r
+                    <span class="hljs-keyword">return</span>
+            )
+        
+        <span class="hljs-keyword">return</span>
+
+    <span class="hljs-keyword">return</span></pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

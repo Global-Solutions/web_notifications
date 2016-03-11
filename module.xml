@@ -7,9 +7,9 @@
   <vendor>${module.vendor}</vendor>
   <description>${module.description}</description>
   <dependencies>
-    <dependency>
-      <module-id>jp.co.gsol.wiki.wiki_imbox_plugin</module-id>
-      <verified-version>1.0.0</verified-version>
-    </dependency>
+  	<dependency>
+  		<module-id>jp.co.intra_mart.imart_seasar2</module-id>
+  		<verified-version min="8.0.5">8.0.5</verified-version>
+  	</dependency>
   </dependencies>
 </module>

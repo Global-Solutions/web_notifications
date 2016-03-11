@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+- xjc : Craete JAXBBean from XSD
+
+-->
+<project default="xjc" basedir=".">
+	<target name="xjc">
+		<exec executable="xjc.exe" output="schema-gen.output" osfamily="Windows">
+			<arg line=" -npa"/>
+			<arg line=" -no-header"/>
+			<arg line="-d"/>
+			<arg file="src/main/generated"/>
+			<arg file="src/main/schema"/>
+		</exec>
+	</target>
+</project>

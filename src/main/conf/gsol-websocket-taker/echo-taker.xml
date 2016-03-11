@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tns:gsol-websocket-taker
+    xmlns:tns="http://global-solutions.co.jp/notifications/config/gsol-websocket-taker"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://global-solutions.co.jp/notifications/config/gsol-websocket-taker ../../schema/gsol-websocket-taker.xsd ">
+    <tns:protocol>websocket-echo-protocol</tns:protocol>
+    <tns:taker>
+        <tns:dicon-path>jp/co/gsol/oss/notifications/impl/contrib/echo.dicon</tns:dicon-path>
+        <tns:component-name>EchoTaker</tns:component-name>
+    </tns:taker>
+</tns:gsol-websocket-taker>

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
-	<buildpathentry kind="src" path="src/main/jssp/src"/>
-	<buildpathentry kind="src" path="src/main/public"/>
-	<buildpathentry kind="src" path="src/test/jssp/src"/>
-	<buildpathentry kind="src" path="src/test/public"/>
-	<buildpathentry kind="con" path="org.ebayopensource.vjet.eclipse.core.JSNATIVE_CONTAINER/JS Native Types"/>
-	<buildpathentry kind="con" path="org.ebayopensource.vjet.eclipse.core.VJO_CONTAINER/VJO LIB"/>
 	<buildpathentry kind="con" path="jp.co.intra_mart.app.developer.editor.ssjseditor.vjetext.IM_CONTAINER/WorkspaceJsLib"/>
+	<buildpathentry kind="con" path="org.ebayopensource.vjet.eclipse.core.VJO_CONTAINER/VJO LIB"/>
+	<buildpathentry kind="con" path="org.ebayopensource.vjet.eclipse.core.JSNATIVE_CONTAINER/JS Native Types"/>
+	<buildpathentry kind="src" path="src/test/public"/>
+	<buildpathentry kind="src" path="src/test/jssp/src"/>
+	<buildpathentry kind="src" path="src/main/public"/>
+	<buildpathentry kind="src" path="src/main/jssp/src"/>
+	<buildpathentry external="true" kind="lib" path="D:/resin-pro-4.0.37/webapps/demo/WEB-INF/lib/commons-validator-1.3.1.jar"/>
+	<buildpathentry external="true" kind="lib" path="D:/resin-pro-4.0.37/lib/javax.faces-2.1.24.jar"/>
 </buildpath>

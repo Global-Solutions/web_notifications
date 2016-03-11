@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>notifications.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="notifications.html">
+                notifications.coffee
+              </a>
+            
+              
+              <a class="source" href="webSocketWorker.html">
+                webSocketWorker.coffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>notifications.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>notifications.coffee は、WebNotificationsとWebSocketのUtilitiesライブラリです。</p>
+<p>Copyright 2014 Global Solutions company limited</p>
+<p>notifications.coffee may be freely distributed under the GPL-3.0 license.</p>
+<hr>
+
+            </div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>local jQuery object</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>$ = <span class="hljs-property">@jQuery</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2 id="webnotifications-implements">WebNotifications implements</h2>
+<ul>
+<li>@$: jQueryの名前が違う場合に、jQueryを設定する</li>
+<li>@defaultIcon: WebNotificationのデフォルトで表示するアイコンのpathを設定する</li>
+<li>@requestPermission: WebNotificationの表示権限取得</li>
+<li>@onLoadHandler: 起動時の処理</li>
+<li>@showNotification: Notificationの表示</li>
+</ul>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-property">@notifications</span> = (<span class="hljs-function">-&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Notificationが使えるかどうか</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    available = Notification?</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>default icon path</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    icon = <span class="hljs-string">''</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <h3 id="-_-">$({_$}) -&gt; $</h3>
+<p>内部jQueryオブジェクトの設定 or 取得</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@$</span> = <span class="hljs-function"><span class="hljs-params">(_$ = $)</span> -&gt;</span>
+        $ = _$</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <h3 id="defaulticon-_icon-icon">defaultIcon({_icon}) -&gt; icon</h3>
+<p>デフォルトアイコンpathの設定 or 取得</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@defaultIcon</span> = <span class="hljs-function"><span class="hljs-params">(_icon = icon)</span> -&gt;</span>
+        icon = _icon</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>表示権限がないかどうか</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-function"><span class="hljs-title">permissionNotGranted</span> = <span class="hljs-params">(_Notification)</span> -&gt;</span>
+        _Notification.permission <span class="hljs-keyword">isnt</span> <span class="hljs-string">'granted'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <h3 id="requestpermission-prototype-promise">requestPermission() -&gt; $.prototype.promise</h3>
+<p>WebNotificationの表示権限取得(非同期)<br>表示権限があれば、promiseがresolveされ、
+なければ、rejectされる。</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@requestPermission</span> =<span class="hljs-function"> -&gt;</span>
+        $deferred = $.Deferred()
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> available
+            <span class="hljs-keyword">return</span> $deferred.reject().promise()
+        <span class="hljs-keyword">if</span> permissionNotGranted Notification
+            Notification.requestPermission <span class="hljs-function"><span class="hljs-params">(status)</span> -&gt;</span>
+                <span class="hljs-keyword">if</span> Notification.permission <span class="hljs-keyword">isnt</span> status
+                    Notification.permission = status
+                <span class="hljs-keyword">if</span> permissionNotGranted Notification
+                    $deferred.reject()
+                <span class="hljs-keyword">else</span>
+                    $deferred.resolve()
+                <span class="hljs-keyword">return</span>
+        <span class="hljs-keyword">else</span>
+            $deferred.resolve()
+        $deferred.promise()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <h3 id="onloadhandler-prototype-promise">onLoadHandler() -&gt; $.prototype.promise</h3>
+<p>起動時の処理</p>
+<ul>
+<li>表示権限の取得</li>
+<li>デフォルトアイコンの設定</li>
+</ul>
+<p>表示権限が取得できれば、promiseがresolveされる。</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@onLoadHandler</span> =<span class="hljs-function"> =&gt;</span>
+        $deferred = $.Deferred()
+        <span class="hljs-property">@requestPermission</span>().done<span class="hljs-function"> -&gt;</span> $deferred.resolve()
+        $(<span class="hljs-string">'body'</span>).one <span class="hljs-string">'click'</span>,<span class="hljs-function"> =&gt;</span>
+            <span class="hljs-property">@requestPermission</span>().done<span class="hljs-function"> -&gt;</span> $deferred.resolve()
+        icon = $(<span class="hljs-string">'link[rel=icon]'</span>).attr <span class="hljs-string">'href'</span>
+        $deferred.promise()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <h3 id="shownotification-title-kwargs-prototype-promise">showNotification(title {, kwArgs}) -&gt; $.prototype.promise</h3>
+<p>WebNotificationの表示</p>
+<h4 id="arguments">arguments</h4>
+<ul>
+<li>title: WebNotificationのタイトル</li>
+<li>名前付き引数:<ul>
+<li>options: WebNotificationのoptionsの指定<br>iconを変更したい場合は、options:{icon:}に指定</li>
+<li>events: WebNotificationにイベントハンドラを登録<br>clickイベントにバインドしたい場合は、events:{click:}に指定</li>
+<li>timeout: WebNotificationを指定時間で閉じたい場合に時間を指定</li>
+<li>closeOnClick: WebNotificationをクリックすると閉じたい場合にtrueを指定</li>
+</ul>
+</li>
+</ul>
+<p>WebNotificationが表示されると、promiseがresolveされ、
+表示できなかった場合、rejectされる。<br>promiseハンドラには、WebNotificationオブジェクトとtimeoutIdが渡される。</p>
+<p>例: タイトル’test’、メッセージ’test’の120秒で消えるWebNotificationを表示する。
+(クリックでも閉じられ、close時は、コンソールに出力する。)</p>
+<pre>
+      notifications.showNotification('test', {
+          options: {
+              icon: 'icon/icon.png',
+              body: 'test'
+          },
+          events: {close: function() {
+              console.log('close');
+          },
+          timeout: 120000,
+          closeOnClick: true
+      });
+</pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@showNotification</span> = <span class="hljs-function"><span class="hljs-params">(title, {options, events, timeout, closeOnClick} = {})</span> -&gt;</span>
+        $deferred = $.Deferred()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>iconが指定されてないときは、デフォルトicon</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        options?.icon ?= icon</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>WebNotificationを表示</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        n = <span class="hljs-keyword">new</span> Notification title, options <span class="hljs-keyword">or</span> <span class="hljs-attribute">icon</span>: icon</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>タイマー設定</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-function"><span class="hljs-title">startTimer</span> = -&gt;</span>
+            setTimeout (<span class="hljs-function">-&gt;</span> n.close()), timeout <span class="hljs-keyword">if</span> timeout?</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>表示できたかどうか</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        $n = $(n).<span class="hljs-literal">on</span>
+            <span class="hljs-string">'show'</span>:<span class="hljs-function"> -&gt;</span>
+                $deferred.resolve @, startTimer()
+                <span class="hljs-keyword">return</span>
+            <span class="hljs-string">'error'</span>:<span class="hljs-function"> -&gt;</span>
+                $deferred.reject @, startTimer()
+                <span class="hljs-keyword">return</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>custom events</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        $n.<span class="hljs-literal">on</span> k, v <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">of</span> events <span class="hljs-keyword">if</span> events</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>クリックしたら閉じる?</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        $n.<span class="hljs-literal">on</span> <span class="hljs-string">'click'</span>, (<span class="hljs-function">-&gt;</span>
+            n.close()
+            <span class="hljs-keyword">return</span>
+        ) <span class="hljs-keyword">if</span> closeOnClick</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>設定された値をWebNotificationのプロパティに設定</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        n.events = events
+        n.timeout = timeout
+        n.closeOnClick = closeOnClick <span class="hljs-keyword">or</span> <span class="hljs-literal">false</span>
+
+        $deferred.promise()
+
+    @
+).call {}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>WebSocketのwrapper</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-title">webSocketConnector</span> = -&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>WebSocketが使えるかどうか</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    available = WebSocket?</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>WebSocket接続の実装</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-function"><span class="hljs-title">connect</span> = <span class="hljs-params">(server, protocol, messageHandler, events, reconnect, keepalive)</span> -&gt;</span>
+        $deferred = $.Deferred()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>接続</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        ws = <span class="hljs-keyword">new</span> WebSocket server, protocol
+
+        timeoutId = {}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p>再接続設定などのクリア</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-function"><span class="hljs-title">clearConnectionKeeper</span> = -&gt;</span>
+            <span class="hljs-keyword">if</span> reconnect
+                clearTimeout timeoutId.reconnect <span class="hljs-keyword">if</span> timeoutId.reconnect?
+                $(ws).<span class="hljs-literal">off</span> <span class="hljs-string">'close.reconnect'</span>
+                reconnect = <span class="hljs-literal">false</span>
+            <span class="hljs-keyword">if</span> keepalive
+                clearTimeout timeoutId.keepalive <span class="hljs-keyword">if</span> timeoutId.keepalive?
+                keepalive = <span class="hljs-literal">false</span>
+            <span class="hljs-keyword">return</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>WebSocket操作オブジェクト</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        op =
+            <span class="hljs-attribute">send</span>: <span class="hljs-function"><span class="hljs-params">(message)</span> -&gt;</span>
+                <span class="hljs-keyword">if</span> ws.readyState <span class="hljs-keyword">is</span> WebSocket.OPEN
+                    ws.send message
+                    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+                <span class="hljs-literal">false</span>
+            <span class="hljs-attribute">close</span>:<span class="hljs-function"> -&gt;</span>
+                clearConnectionKeeper()
+                ws.close()
+                <span class="hljs-keyword">return</span>
+        $ws = $(ws).<span class="hljs-literal">on</span>
+            <span class="hljs-string">'open.promise'</span>: <span class="hljs-function"><span class="hljs-params">(e)</span> -&gt;</span>
+                $deferred.resolve op, e
+                <span class="hljs-keyword">return</span>
+            <span class="hljs-string">'error.promise'</span>: <span class="hljs-function"><span class="hljs-params">(e)</span> -&gt;</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p>接続完了後は、このハンドラでは処理を行わない</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">if</span> $deferred.state <span class="hljs-keyword">is</span> <span class="hljs-string">'pending'</span>
+                    clearConnectionKeeper()
+                    $deferred.reject e
+                <span class="hljs-keyword">return</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>メッセージイベント設定</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-function"><span class="hljs-params">(attachMessageEvent = ($s) -&gt;
+            $s.<span class="hljs-literal">on</span> <span class="hljs-string">'message.handler'</span>, ((e) -&gt;
+                messageHandler? e.originalEvent.data
+                <span class="hljs-keyword">return</span>
+            ) <span class="hljs-keyword">if</span> messageHandler
+            <span class="hljs-keyword">return</span>
+        )</span> <span class="hljs-title">$ws</span>
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>関数なら適用、数値なら計算</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-function"><span class="hljs-title">callOrVal</span> = <span class="hljs-params">(fnOrVal, toVal, count, defaultValue)</span> -&gt;</span> +(fnOrVal?(count) ? toVal(fnOrVal ? defaultValue, count))
+        retryCount = <span class="hljs-number">0</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>再接続イベント設定</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-function"><span class="hljs-params">(reconnector = ($s) -&gt;
+            <span class="hljs-keyword">if</span> reconnect
+                interval = callOrVal reconnect.interval, ((v) -&gt; v), retryCount, <span class="hljs-number">0</span>
+                deceleration = callOrVal reconnect.deceleration, ((v, c) -&gt; Math.min(v * c, <span class="hljs-number">600000</span>)), retryCount, <span class="hljs-number">1000</span>
+                timeout = interval + deceleration + Math.random() * <span class="hljs-number">5000</span>
+                $s.<span class="hljs-literal">on</span> <span class="hljs-string">'close.reconnect'</span>, -&gt;
+                    timeoutId.reconnect = setTimeout -&gt;
+                        ws = <span class="hljs-keyword">new</span> WebSocket server, protocol
+                        $rews = $(ws).<span class="hljs-literal">on</span> <span class="hljs-string">'open.reconnect'</span>, (e) -&gt;
+                            retryCount = <span class="hljs-number">0</span>
+                            reconnect.done? op, e
+                        reconnector $rews
+                        attachEvents $rews
+                        <span class="hljs-keyword">return</span>
+                    , (Math.max <span class="hljs-number">0</span>, timeout)
+                    ++retryCount
+                    <span class="hljs-keyword">return</span>
+                <span class="hljs-keyword">return</span>
+        )</span> <span class="hljs-title">$ws</span>
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>カスタムイベント設定</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-function"><span class="hljs-params">(attachEvents = ($s, es) -&gt;
+            $s.<span class="hljs-literal">on</span> k, v <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">of</span> es <span class="hljs-keyword">if</span> es
+            <span class="hljs-keyword">return</span>
+        )</span> <span class="hljs-title">$ws</span>, <span class="hljs-title">events</span> 
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>接続維持イベント設定</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        (<span class="hljs-function">-&gt;</span>
+            pingCount = <span class="hljs-number">0</span>
+            (<span class="hljs-function"><span class="hljs-title">pingSender</span> = -&gt;</span>
+                <span class="hljs-keyword">if</span> keepalive
+                    interval = callOrVal keepalive.interval, <span class="hljs-function"><span class="hljs-params">((v) -&gt; v)</span>, <span class="hljs-title">pingCount</span>, 60000
+                    <span class="hljs-title">message</span> = <span class="hljs-title">keepalive</span>.<span class="hljs-title">message</span>?<span class="hljs-params">(pingCount)</span> ? <span class="hljs-params">(keepalive.message ? <span class="hljs-string">''</span>)</span>
+                    <span class="hljs-title">timeoutId</span>.<span class="hljs-title">keepalive</span> = <span class="hljs-title">setTimeout</span> -&gt;</span>
+                        op.send message
+                        ++pingCount
+                        pingSender()
+                        <span class="hljs-keyword">return</span>
+                    , interval
+                <span class="hljs-keyword">return</span>
+            )()
+            <span class="hljs-keyword">return</span>
+        )()
+
+        $deferred.promise()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <p>サーバに接続できるか確認</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-attribute">available</span>: <span class="hljs-function"><span class="hljs-params">(server, protocol)</span> -&gt;</span>
+        $deferred = $.Deferred()
+        <span class="hljs-keyword">return</span> $deferred.reject().promise() <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> available
+        <span class="hljs-keyword">return</span> $deferred.resolve().promise() <span class="hljs-keyword">if</span> available[server]
+        connect(server, protocol)
+            .done<span class="hljs-function"><span class="hljs-params">((op) -&gt;
+                op.close()
+                available[server] = <span class="hljs-literal">true</span>
+                $deferred.resolve()
+                <span class="hljs-keyword">return</span>
+            )</span>.<span class="hljs-title">fail</span> -&gt;</span>
+                $deferred.reject()
+                <span class="hljs-keyword">return</span>
+        $deferred.promise()
+    <span class="hljs-attribute">register</span>: <span class="hljs-function"><span class="hljs-params">(server, protocol, messageHandler, events, reconnect, keepalive)</span> -&gt;</span>
+        connect server, protocol, messageHandler, events, reconnect, keepalive</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <h3 id="websockets-implements">WebSockets implements</h3>
+<ul>
+<li>@contextPath: context pathを設定 or 取得</li>
+<li>@servletPath: WebSocket servletのpathを設定 or 取得</li>
+<li>@available: Serverが使えるかどうか</li>
+<li>@onLoadHandler: 起動時の処理</li>
+<li>@defaultServer: デフォルトのサーバのpathを設定 or 取得</li>
+<li>@connect: WebSocketの接続</li>
+</ul>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-property">@webSockets</span> = <span class="hljs-function"><span class="hljs-params">((con)-&gt;
+</span></span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>server pathを生成</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-function"><span class="hljs-title">serverPath</span> = <span class="hljs-params">(proto, host, contextPath = <span class="hljs-string">''</span>, servletPath = <span class="hljs-string">''</span>)</span> -&gt;</span> <span class="hljs-string">"<span class="hljs-subst">#{proto}</span>//<span class="hljs-subst">#{host}</span><span class="hljs-subst">#{contextPath}</span><span class="hljs-subst">#{servletPath}</span>"</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>http: -&gt; ws:, https: -&gt; wss:</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    proto = {<span class="hljs-string">'http:'</span>: <span class="hljs-string">'ws:'</span>, <span class="hljs-string">'https:'</span>: <span class="hljs-string">'wss:'</span>}[location.protocol]
+    host = location.host
+    contextPath = <span class="hljs-string">''</span>
+    servletPath = <span class="hljs-string">'/notifications/websocket'</span>
+    defaultServer = serverPath proto, host, contextPath, servletPath
+    echoProtocol = <span class="hljs-string">'websocket-echo-protocol'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>IE does not have location.origin</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    location.origin ?= <span class="hljs-string">"<span class="hljs-subst">#{location.protocol}</span>//<span class="hljs-subst">#{location.host}</span>"</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <h2 id="contextpath-path-contextpath">contextPath({path}) -&gt; contextPath</h2>
+<p>context pathを設定 or 取得</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@contextPath</span> = <span class="hljs-function"><span class="hljs-params">(path = contextPath)</span> -&gt;</span>
+        contextPath = path</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-37">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-37">&#182;</a>
+              </div>
+              <h2 id="servletpath-path-servletpath">servletPath({path}) -&gt; servletPath</h2>
+<p>WebSocket servletのpathを設定 or 取得</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@servletPath</span> = <span class="hljs-function"><span class="hljs-params">(path = servletPath)</span> -&gt;</span>
+        servletPath = path</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <h2 id="available-server-bool">available({server}) -&gt; bool</h2>
+<p>Serverが使えるかどうか</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@available</span> = <span class="hljs-function"><span class="hljs-params">(server)</span> -&gt;</span>
+        con.available server, echoProtocol</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <h2 id="onloadhandler-prototype-promise">onLoadHandler() -&gt; $.prototype.promise</h2>
+<p>起動時の処理</p>
+<ul>
+<li>デフォルトサーバの設定</li>
+<li>デフォルトサーバに接続できるか</li>
+</ul>
+<p>接続できれば、promiseがresolveされる</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@onLoadHandler</span> =<span class="hljs-function"> =&gt;</span>
+        $deferred = $.Deferred()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
+              </div>
+              <p>base urlから、context pathを設定</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-property">@defaultServer</span> serverPath proto, host, contextPath <span class="hljs-keyword">or</span> $(<span class="hljs-string">'base'</span>).attr(<span class="hljs-string">'href'</span>)?.replace(<span class="hljs-keyword">new</span> RegExp(<span class="hljs-string">"<span class="hljs-subst">#{location.origin}</span>(.+)/$"</span>), <span class="hljs-string">'$1'</span>), servletPath
+        <span class="hljs-property">@available</span>(defaultServer).done<span class="hljs-function"> -&gt;</span>
+            $deferred.resolve()
+            <span class="hljs-keyword">return</span>
+        $deferred.promise()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <h2 id="defaultserver-server-defaultserver">defaultServer({server}) -&gt; defaultServer</h2>
+<p>デフォルトのサーバのpathを設定 or 取得</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@defaultServer</span> = <span class="hljs-function"><span class="hljs-params">(server = defaultServer)</span> -&gt;</span>
+        defaultServer = server</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-42">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-42">&#182;</a>
+              </div>
+              <h2 id="connect-kwargs-prototype-promise">connect({kwArgs}) -&gt; $.prototype.promise</h2>
+<ul>
+<li>名前付き引数:<ul>
+<li>{server}: 接続先サーバ、未指定の場合はデフォルトサーバに接続</li>
+<li>{protocol}: 接続プロトコル、未指定の場合はプロトコルを指定しない</li>
+<li>{messageHandler}: messageを受信したときのハンドラ<br>ハンドラには、メッセージが渡される。</li>
+<li>{events}: WebSocketにイベントハンドラを登録<br>closeイベントにバインドしたい場合は、events:{close:}に指定</li>
+<li>{reconnect}: 再接続設定<ul>
+<li>{interval}: 再接続までの時間を返す関数(再接続回数が引数に渡される)か数値。デフォルト0</li>
+<li>{deceleration}: 再接続までの時間を返す関数(再接続回数が引数に渡される)か数値、減衰項として使用。デフォルト1000</li>
+<li>{done}: 再接続完了時のイベントハンドラ</li>
+</ul>
+</li>
+<li>{keepalive}: 接続維持設定<ul>
+<li>{interval}: 接続維持するまでの時間を返す関数(接続維持回数が引数に渡される)か数値。デフォルト60000</li>
+<li>{message}: 接続維持する際のpingメッセージを返す関数(接続維持回数が引数に渡される)か文字列。デフォルトは空文字</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>WebSocketが接続されると、promiseがresolveされ、
+接続できなかった場合、rejectされる。
+promiseハンドラには、WebSocket操作オブジェクトが渡される。<br>WebSocket操作オブジェクト</p>
+<ul>
+<li>send(message): messageをサーバに送信する。</li>
+<li>close(): WebSocketを閉じる(再接続処理は行わない)。</li>
+</ul>
+<p>例: デフォルトサーバに’websocket-test-protocol’で接続し、受け取ったメッセージをコンソールに出力する例<br>(90秒毎に接続維持を行い、切断された場合は、1秒+[0, 10]分毎に再接続を行う。)</p>
+<pre>
+      webSockets.connect({
+          protocol: 'websocket-test-protocol',
+          messageHandler: function(m) {
+              console.log(m);
+          },
+          events: {close: function() {
+              console.log('close');
+          }},
+          reconnect: {
+              interval: 1000,
+              deceleration: function(c) {
+                  return Math.min(c * c, 600000);
+              },
+              done: function() {
+                  console.log('done');
+              }
+          },
+          keepalive: {
+              interval: 900000,
+              message: function(c) {
+                  return c:
+              }
+          }
+      }).done(function(ws) {
+          ws.send('test');
+      });
+</pre>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-property">@connect</span> = <span class="hljs-function"><span class="hljs-params">({server, protocol, messageHandler, events, reconnect, keepalive})</span> -&gt;</span>
+        $deferred = $.Deferred()
+        server ?= defaultServer
+        con.register(server, protocol, messageHandler, events, reconnect, keepalive) 
+        .done<span class="hljs-function"><span class="hljs-params">((o) -&gt;
+            $deferred.resolve o
+            <span class="hljs-keyword">return</span>
+        )</span>.<span class="hljs-title">fail</span> <span class="hljs-params">(o)</span> -&gt;</span>
+            $deferred.reject()
+            <span class="hljs-keyword">return</span>
+        $deferred.promise()
+
+    @
+).call @, webSocketConnector()</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              <p>not implemented yet</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-property">@sharedWebSockets</span> = (<span class="hljs-function">-&gt;</span>
+
+).call {}</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
