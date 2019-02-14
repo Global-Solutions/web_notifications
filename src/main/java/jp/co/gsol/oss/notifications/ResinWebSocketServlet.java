@@ -47,7 +47,15 @@ public class ResinWebSocketServlet extends GenericServlet {
             res.setHeader("Sec-WebSocket-Protocol", protocol);
             final WebSocketServletRequest wsRequest = (WebSocketServletRequest)
                     ((TransitionLogHttpServletRequestWrapper) request).getRequest();
-            wsRequest.startWebSocket(listener);
+            
+            try {
+                wsRequest.startWebSocket(listener);
+            } catch (IllegalStateException e) {
+                Logger.getLogger().info("websocket request error: {}", e.getMessage());
+                res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
+                return;
+            }
+            
             if (wst.processClass().isPresent()) {
             // start push event loop
                 try {
