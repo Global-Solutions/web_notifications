@@ -52,7 +52,6 @@ public class ResinWebSocketServlet extends GenericServlet {
                 wsRequest.startWebSocket(listener);
             } catch (IllegalStateException e) {
                 Logger.getLogger().info("websocket request error: {}", e.getMessage());
-                res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE);
                 return;
             }
             
