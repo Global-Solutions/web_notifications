@@ -10,8 +10,6 @@ import com.google.common.base.Optional;
 
 import jp.co.intra_mart.common.platform.log.Logger;
 import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
-import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
-import jp.co.intra_mart.foundation.asynchronous.TaskManager;
 
 /**
  * waiting task implements.
@@ -42,9 +40,9 @@ public abstract class AbstractDeferringTask extends AbstractTask {
                     advanceClass = this.getClass().getCanonicalName();
                 }
                 Logger.getLogger().debug("key: {}, count: {}, param: {}", key, count, signalParam);
-                TaskManager.addParallelizedTask(advanceClass, nextParam);
+                IntervalScheduler.getInstance().add(advanceClass, nextParam);
             }
-        } catch (InterruptedException | ExecutionException | TaskControlException e) {
+        } catch (InterruptedException | ExecutionException e) {
             Logger.getLogger().error("event loop abort", e);
         }
     }
