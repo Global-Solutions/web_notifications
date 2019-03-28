@@ -50,7 +50,7 @@ public class IntervalDeferringTask extends AbstractDeferringTask {
                         }
                     });
                 } catch (final InterruptedException e) {
-                    Logger.getLogger().error("evant loop abort", e);
+                    Logger.getLogger().error("event loop abort", e);
                     return Optional.absent();
                 }
                 return Optional.of(deferredCount + 1 >= repeat); //emit continue signal

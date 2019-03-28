@@ -9,13 +9,13 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import com.caucho.websocket.WebSocketServletRequest;
 import com.google.common.base.Optional;
 
+import jp.co.gsol.oss.notifications.impl.IntervalScheduler;
 import jp.co.intra_mart.common.platform.log.Logger;
-import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
-import jp.co.intra_mart.foundation.asynchronous.TaskManager;
+import jp.co.intra_mart.foundation.context.Contexts;
+import jp.co.intra_mart.foundation.context.model.AccountContext;
 import jp.co.intra_mart.system.log.transition.TransitionLogHttpServletRequestWrapper;
 
 
@@ -38,6 +38,7 @@ public class ResinWebSocketServlet extends GenericServlet {
     throws IOException {
         final HttpServletRequest req = (HttpServletRequest) request;
         final HttpServletResponse res = (HttpServletResponse) response;
+        final String userCd = Contexts.get(AccountContext.class).getUserCd();
 
         final String protocol = req.getHeader("Sec-WebSocket-Protocol");
         final Optional<WebSocketTaker> taker = WebSocketTakerManager.getProtocolsTaker(protocol);
@@ -56,14 +57,10 @@ public class ResinWebSocketServlet extends GenericServlet {
             }
             
             if (wst.processClass().isPresent()) {
-            // start push event loop
-                try {
-                    final Map<String, Object> param = new HashMap<>();
-                    param.put("key", listener.key);
-                    TaskManager.addParallelizedTask(wst.processClass().get(), param);
-                } catch (final TaskControlException e) {
-                    Logger.getLogger().error("event loop abort", e);
-                }
+                // start push event loop
+                final Map<String, Object> param = new HashMap<>();
+                param.put("key", listener.key);
+                IntervalScheduler.getInstance().add(wst.processClass().get(), userCd, param);
             }
         } else {
             Logger.getLogger().info("invalid protocol: {}", protocol);

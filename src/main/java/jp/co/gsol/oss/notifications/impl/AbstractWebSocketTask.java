@@ -9,56 +9,38 @@ import java.util.concurrent.ExecutionException;
 
 import com.caucho.websocket.WebSocketContext;
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableMap;
-
 import jp.co.gsol.oss.notifications.WebSocketContextManager;
 import jp.co.gsol.oss.notifications.impl.contrib.IntervalDeferringTask;
 import jp.co.intra_mart.common.platform.log.Logger;
 import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
-import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
-import jp.co.intra_mart.foundation.asynchronous.TaskManager;
+import jp.co.intra_mart.foundation.context.Contexts;
+import jp.co.intra_mart.foundation.context.model.AccountContext;
 
 /**
  * push event loop & default configuration.
  * @author Global Solutions company limited
  */
 public abstract class AbstractWebSocketTask extends AbstractTask {
-    /** waiting unit time.*/
-    protected static final int DEFERRING_INTERVAL = 10_000;
-    /** repeat times for a cycle.*/
-    protected static final int DEFERRING_REPEAT = 6;
-    /** default propagation parameter for waiting task.*/
-    protected static final Map<String, String> DEFERRING_INTERVAL_PARAM =
-            ImmutableMap
-            .of("interval", String.valueOf(DEFERRING_INTERVAL),
-                "repeat", String.valueOf(DEFERRING_REPEAT));
     /** the number of retrying to find session.*/
     protected static final int RETRY_LIMIT = 10;
-    /** deceleration for retry to find session.*/
-    protected static final int RETRY_DECELERATION = 1_000;
     @Override
     public final void run() {
         final Map<String, ?> param = getParameter();
         final String key = (String) param.get("key");
+        final String userCd = Contexts.get(AccountContext.class).getUserCd();
         final Map<String, Object> nextParam = new HashMap<>(param);
         // if not same ContextPool, retry
-        if (!WebSocketContextManager.sameSession(key))
-            try {
-                final String retryCount = (String) param.get("retryCount");
-                final int count = retryCount != null ? Integer.valueOf(retryCount) : 0;
-                final Optional<Map<String, String>> retryParam = retryParam(key, count);
-                if (retryParam.isPresent()) {
-                    nextParam.put("deferringParam", retryParam.get());
-                    nextParam.put("deferredClass", this.getClass().getCanonicalName());
-                    nextParam.put("retryCount", String.valueOf(count + 1));
-                    TaskManager.addParallelizedTask(IntervalDeferringTask.class.getCanonicalName(), nextParam);
-                }
-            } catch (final TaskControlException e) {
-                Logger.getLogger().error("event loop abort", e);
+        if (!WebSocketContextManager.sameSession(key)) {
+            final String retryCount = (String) param.get("retryCount");
+            final int count = retryCount != null ? Integer.valueOf(retryCount) : 0;
+            if (count < RETRY_LIMIT) {
+                nextParam.put("retryCount", String.valueOf(count + 1));
+                IntervalScheduler.getInstance().add(this.getClass().getCanonicalName(), userCd, nextParam);
+                return;
             }
-        else
+        } else {
             nextParam.put("retryCount", String.valueOf(0));
-
+        }
         Optional<WebSocketContext> context = Optional.absent();
         try {
             // wait for fetching context
@@ -80,20 +62,11 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
         final List<String> processed = processedMessage(key,
                 lastParam != null && !lastParam.isEmpty() ? lastParam : initialParam(key));
         if ((context = WebSocketContextManager.context(key)).isPresent()) {
-                nextParam.put("lastParam", done(key, sendMessage(processed, context.get())));
-            try {
-                final Optional<String> deferringTask = deferringTask();
-                // continue loop
-                if (deferringTask.isPresent()) {
-                    nextParam.put("deferredClass", this.getClass().getCanonicalName());
-                    nextParam.put("deferringParam", deferringParam(key));
-                    TaskManager.addParallelizedTask(deferringTask.get(), nextParam);
-                }
-            } catch (final TaskControlException e) {
-                Logger.getLogger().error("event loop abort", e);
-            }
-        } else
+            nextParam.put("lastParam", done(key, sendMessage(processed, context.get())));
+            IntervalScheduler.getInstance().add(this.getClass().getCanonicalName(), userCd, nextParam);
+        } else {
             WebSocketContextManager.clearSession(key);
+        }
     }
     /**
      * send messages to the context's client.
@@ -148,27 +121,5 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
      */
     protected Map<String, String> initialParam(final String key) {
         return new HashMap<>();
-    }
-    /**
-     * propagation parameter for waiting task.
-     * @param key identification for the session
-     * @return propagation parameter
-     */
-    protected Map<String, String> deferringParam(final String key) {
-        return DEFERRING_INTERVAL_PARAM;
-    }
-    /**
-     * propagation parameter for finding no session.
-     * @param key identification for the session
-     * @param count the number of retrying to find session
-     * @return propagation parameter for next trying
-     */
-    protected Optional<Map<String, String>> retryParam(final String key, final int count) {
-        if (count >= RETRY_LIMIT)
-            return Optional.absent();
-        final Map<String, String> param = new HashMap<>();
-        param.put("interval", String.valueOf(RETRY_DECELERATION * count));
-        param.put("repeat", String.valueOf(1));
-        return Optional.of(param);
     }
 }

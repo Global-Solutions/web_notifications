@@ -10,8 +10,8 @@ import com.google.common.base.Optional;
 
 import jp.co.intra_mart.common.platform.log.Logger;
 import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
-import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
-import jp.co.intra_mart.foundation.asynchronous.TaskManager;
+import jp.co.intra_mart.foundation.context.Contexts;
+import jp.co.intra_mart.foundation.context.model.AccountContext;
 
 /**
  * waiting task implements.
@@ -21,6 +21,7 @@ public abstract class AbstractDeferringTask extends AbstractTask {
     @Override
     public final void run() {
         final Map<String, ?> param = getParameter();
+        final String userCd = Contexts.get(AccountContext.class).getUserCd();
         final String key = (String) param.get("key");
         final String deferredClass = (String) param.get("deferredClass");
         final Object deferringParam = param.get("deferringParam");
@@ -42,9 +43,9 @@ public abstract class AbstractDeferringTask extends AbstractTask {
                     advanceClass = this.getClass().getCanonicalName();
                 }
                 Logger.getLogger().debug("key: {}, count: {}, param: {}", key, count, signalParam);
-                TaskManager.addParallelizedTask(advanceClass, nextParam);
+                IntervalScheduler.getInstance().add(advanceClass, userCd, nextParam);
             }
-        } catch (InterruptedException | ExecutionException | TaskControlException e) {
+        } catch (InterruptedException | ExecutionException e) {
             Logger.getLogger().error("event loop abort", e);
         }
     }
@@ -59,8 +60,7 @@ public abstract class AbstractDeferringTask extends AbstractTask {
      *      continue this waiting task -> false
      *      stop the event loop -> absent
      */
-    protected abstract Future<Optional<Boolean>> signal(
-            final String key, final Map<String, String> param,
-            final int deferredCount,
-            final ForkJoinPool fjp);
+    protected abstract Future<Optional<Boolean>> signal(final String key, final Map<String, String> param,
+            final int deferredCount, final ForkJoinPool fjp);
+    
 }
