@@ -13,6 +13,8 @@ import jp.co.gsol.oss.notifications.WebSocketContextManager;
 import jp.co.gsol.oss.notifications.impl.contrib.IntervalDeferringTask;
 import jp.co.intra_mart.common.platform.log.Logger;
 import jp.co.intra_mart.foundation.asynchronous.AbstractTask;
+import jp.co.intra_mart.foundation.context.Contexts;
+import jp.co.intra_mart.foundation.context.model.AccountContext;
 
 /**
  * push event loop & default configuration.
@@ -25,6 +27,7 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
     public final void run() {
         final Map<String, ?> param = getParameter();
         final String key = (String) param.get("key");
+        final String userCd = Contexts.get(AccountContext.class).getUserCd();
         final Map<String, Object> nextParam = new HashMap<>(param);
         // if not same ContextPool, retry
         if (!WebSocketContextManager.sameSession(key)) {
@@ -32,7 +35,7 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
             final int count = retryCount != null ? Integer.valueOf(retryCount) : 0;
             if (count < RETRY_LIMIT) {
                 nextParam.put("retryCount", String.valueOf(count + 1));
-                IntervalScheduler.getInstance().add(this.getClass().getCanonicalName(), nextParam);
+                IntervalScheduler.getInstance().add(this.getClass().getCanonicalName(), userCd, nextParam);
                 return;
             }
         } else {
@@ -60,7 +63,7 @@ public abstract class AbstractWebSocketTask extends AbstractTask {
                 lastParam != null && !lastParam.isEmpty() ? lastParam : initialParam(key));
         if ((context = WebSocketContextManager.context(key)).isPresent()) {
             nextParam.put("lastParam", done(key, sendMessage(processed, context.get())));
-            IntervalScheduler.getInstance().add(this.getClass().getCanonicalName(), nextParam);
+            IntervalScheduler.getInstance().add(this.getClass().getCanonicalName(), userCd, nextParam);
         } else {
             WebSocketContextManager.clearSession(key);
         }

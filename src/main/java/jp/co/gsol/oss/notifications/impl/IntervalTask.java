@@ -4,7 +4,6 @@ import java.util.Map;
 
 import jp.co.intra_mart.common.platform.log.Logger;
 import jp.co.intra_mart.foundation.asynchronous.Task;
-import jp.co.intra_mart.foundation.asynchronous.TaskControlException;
 import jp.co.intra_mart.foundation.asynchronous.TaskEvent;
 
 public class IntervalTask implements Task {
@@ -18,7 +17,7 @@ public class IntervalTask implements Task {
         try {
             Thread.sleep(interval);
             IntervalScheduler.getInstance().run();
-        } catch (InterruptedException | TaskControlException e) {
+        } catch (InterruptedException e) {
             Logger.getLogger().error("task scheduler error", e);
         }
     }
